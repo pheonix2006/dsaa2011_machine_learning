@@ -1,0 +1,37 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv/
+
+# Data files
+data/
+
+# Notebook checkpoints
+notebooks/.ipynb_checkpoints/
+
+# Documentation
+docs/
+
+# Markdown files
+*.md
+!README.md
+!project_announce_L01.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Environment
+.env
+.python-version
+uv.lock
