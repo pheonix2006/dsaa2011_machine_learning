@@ -7,6 +7,7 @@
 ```
 2011machine_learning/
 ├── src/                         # 可复用工具函数
+│   ├── fetch_data.py            #   数据下载
 │   ├── preprocessing.py         #   数据预处理
 │   ├── visualization.py         #   数据可视化
 │   ├── clustering.py            #   聚类分析
@@ -24,9 +25,8 @@
 │   ├── features_processed.csv   #   处理后特征
 │   ├── targets_processed.csv    #   处理后标签
 │   └── plots/                   #   所有生成的图表
-├── src/                         # 源代码
 ├── pyproject.toml               # Python 依赖配置
-└── CLAUDE.md                    # 项目指南
+└── project_announce_L01.md      # 项目任务要求
 ```
 
 ## Environment Setup
@@ -53,54 +53,17 @@ source .venv/bin/activate   # Linux/macOS
 pip install -e .
 ```
 
-## Data Download
+## Data Preparation
 
-数据文件未纳入版本控制（`data/` 已加入 `.gitignore`），首次使用需手动下载。
+数据文件未纳入版本控制（`data/` 已加入 `.gitignore`）。首次使用只需按顺序运行 Notebooks 即可：
 
-### Step 1: 确保依赖已安装
+打开 `notebooks/01_data_preprocessing.ipynb` 并按顺序执行所有单元格，该 Notebook 会自动完成以下步骤：
 
-```bash
-pip install ucimlrepo pandas
-```
-
-### Step 2: 下载并保存数据
-
-在项目根目录运行以下 Python 代码：
-
-```python
-import os
-from ucimlrepo import fetch_ucirepo
-
-# fetch dataset
-predict_students_dropout_and_academic_success = fetch_ucirepo(id=697)
-
-# data (as pandas dataframes)
-X = predict_students_dropout_and_academic_success.data.features
-y = predict_students_dropout_and_academic_success.data.targets
-
-# save to data/
-os.makedirs("data", exist_ok=True)
-X.to_csv("data/features.csv", index=False)
-y.to_csv("data/targets.csv", index=False)
-
-print(f"Features saved: {X.shape}")
-print(f"Targets saved: {y.shape}")
-
-# metadata
-print(predict_students_dropout_and_academic_success.metadata)
-
-# variable information
-print(predict_students_dropout_and_academic_success.variables)
-```
-
-### Step 3: 运行预处理 Notebook
-
-打开 `notebooks/01_data_preprocessing.ipynb` 并按顺序执行所有单元格。该 Notebook 会：
-
-- 加载原始数据
-- 执行缺失值处理、特征编码、标准化
-- 生成 `data/features_processed.csv` 和 `data/targets_processed.csv`
-- 生成统计图表至 `data/plots/`
+1. **数据下载** — 通过 UCI ML Repo 自动下载原始数据（若已存在则跳过）
+2. **数据加载** — 读取 `data/features.csv` 和 `data/targets.csv`
+3. **数据预处理** — 缺失值处理、特征编码（one-hot）、标准化
+4. **数据保存** — 生成 `data/features_processed.csv` 和 `data/targets_processed.csv`
+5. **可视化** — 生成统计图表至 `data/plots/`
 
 > 完成后即可按编号顺序运行其余 Notebook。
 
@@ -110,7 +73,7 @@ print(predict_students_dropout_and_academic_success.variables)
 |----------|-------------|
 | `01_data_preprocessing.ipynb` | 数据加载、缺失值处理、特征编码与标准化 |
 | `02_tsne_visualization.ipynb` | t-SNE 降维可视化 |
-| `03_clustering.ipustering.ipynb` | 聚类分析 |
+| `03_clustering.ipynb` | 聚类分析 |
 | `04_prediction.ipynb` | 预测模型训练与测试 |
 | `05_model_evaluation.ipynb` | 模型评估与选择 |
 | `06_open_exploration.ipynb` | 开放式探索 |
