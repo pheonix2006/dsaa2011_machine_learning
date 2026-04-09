@@ -1,0 +1,357 @@
+"""
+Data clustering utilities for Student Dropout and Academic Success dataset.
+
+Provides functions for:
+- K-Means, Agglomerative, and DBSCAN clustering
+- Cluster evaluation metrics
+- Cluster visualization
+"""
+
+import os
+from typing import Optional
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from scipy.cluster.hierarchy import dendrogram, linkage
+from sklearn.cluster import AgglomerativeClustering, DBSCAN, KMeans
+from sklearn.metrics import (
+    adjusted_rand_score,
+    calinski_harabasz_score,
+    davies_bouldin_score,
+    normalized_mutual_info_score,
+    silhouette_score,
+    silhouette_samples,
+)
+
+# Color schemes
+CLASS_COLORS = {0: "#e74c3c", 1: "#f39c12", 2: "#2ecc71"}  # Dropout, Enrolled, Graduate
+CLASS_NAMES = {0: "Dropout", 1: "Enrolled", 2: "Graduate"}
+
+CLUSTER_COLORS = [
+    "#e74c3c", "#f39c12", "#2ecc71", "#3498db", "#9b59b6",
+    "#1abc9c", "#e91e63", "#00bcd4", "#ff5722", "#795548",
+]
+
+
+# ============================================================================
+# Clustering Algorithms
+# ============================================================================
+
+
+def apply_kmeans(X: np.ndarray, n_clusters: int, random_state: int = 42) -> tuple[np.ndarray, KMeans]:
+    """Apply K-Means clustering and return labels and model."""
+    model = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=10, algorithm="lloyd")
+    labels = model.fit_predict(X)
+    return labels, model
+
+
+def apply_agglomerative(X: np.ndarray, n_clusters: int, linkage: str = "ward") -> tuple[np.ndarray, AgglomerativeClustering]:
+    """Apply Agglomerative Hierarchical Clustering and return labels and model."""
+    model = AgglomerativeClustering(n_clusters=n_clusters, linkage=linkage)
+    labels = model.fit_predict(X)
+    return labels, model
+
+
+def apply_dbscan(X: np.ndarray, eps: float = 0.5, min_samples: int = 5) -> tuple[np.ndarray, DBSCAN]:
+    """Apply DBSCAN clustering and return labels and model. -1 = noise."""
+    model = DBSCAN(eps=eps, min_samples=min_samples)
+    labels = model.fit_predict(X)
+    return labels, model
+
+
+# ============================================================================
+# Cluster Evaluation Metrics
+# ============================================================================
+
+
+def evaluate_clustering(X: np.ndarray, labels: np.ndarray, y_true: Optional[np.ndarray] = None) -> dict[str, float]:
+    """Evaluate clustering quality with multiple metrics.
+
+    Metrics:
+        silhouette: higher is better (-1 to 1)
+        calinski_harabasz: higher is better
+        davies_bouldin: lower is better
+        adjusted_rand_index, normalized_mutual_info: higher is better (if y_true provided)
+    """
+    # Filter out noise points (DBSCAN label = -1)
+    mask = labels >= 0
+    n_clusters = len(set(labels[mask]))
+
+    if n_clusters < 2:
+        print(f"Warning: Only {n_clusters} cluster(s) found.")
+        return {}
+
+    X_valid = X[mask]
+    labels_valid = labels[mask]
+
+    metrics = {
+        "silhouette": silhouette_score(X_valid, labels_valid),
+        "silhouette_std": silhouette_samples(X_valid, labels_valid).std(),
+        "calinski_harabasz": calinski_harabasz_score(X_valid, labels_valid),
+        "davies_bouldin": davies_bouldin_score(X_valid, labels_valid),
+    }
+
+    if y_true is not None:
+        y_valid = np.asarray(y_true)[mask]
+        metrics["adjusted_rand_index"] = adjusted_rand_score(y_valid, labels_valid)
+        metrics["normalized_mutual_info"] = normalized_mutual_info_score(y_valid, labels_valid)
+
+    return metrics
+
+
+def find_optimal_kmeans(X: np.ndarray, k_range: range, random_state: int = 42) -> dict[int, dict[str, float]]:
+    """Find optimal K for K-Means by computing metrics for each K."""
+    results = {}
+    for k in k_range:
+        if k < 2:
+            continue
+        labels, model = apply_kmeans(X, n_clusters=k, random_state=random_state)
+        metrics = evaluate_clustering(X, labels)
+        results[k] = {
+            "inertia": model.inertia_,
+            "silhouette": metrics.get("silhouette", np.nan),
+            "calinski_harabasz": metrics.get("calinski_harabasz", np.nan),
+            "davies_bouldin": metrics.get("davies_bouldin", np.nan),
+        }
+    return results
+
+
+# ============================================================================
+# Visualization
+# ============================================================================
+
+
+def plot_elbow_method(results: dict[int, dict[str, float]], save_path: Optional[str] = None) -> plt.Figure:
+    """Plot inertia curve for elbow method."""
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ks = sorted(results.keys())
+    inertias = [results[k]["inertia"] for k in ks]
+
+    ax.plot(ks, inertias, "bo-", linewidth=2, markersize=8)
+    ax.set_xlabel("Number of Clusters (K)")
+    ax.set_ylabel("Inertia")
+    ax.set_title("Elbow Method for Optimal K", fontweight="bold")
+    ax.grid(True, alpha=0.3)
+    ax.set_xticks(ks)
+
+    if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path, dpi=150, bbox_inches="tight")
+        print(f"Plot saved to {save_path}")
+
+    plt.tight_layout()
+    return fig
+
+
+def plot_metric_comparison(results: dict[int, dict[str, float]], metrics: list[str], save_path: Optional[str] = None) -> plt.Figure:
+    """Plot clustering metrics across different K values."""
+    metric_titles = {
+        "silhouette": "Silhouette Score (higher is better)",
+        "calinski_harabasz": "Calinski-Harabasz Index (higher is better)",
+        "davies_bouldin": "Davies-Bouldin Index (lower is better)",
+    }
+
+    fig, axes = plt.subplots(1, len(metrics), figsize=(6 * len(metrics), 5))
+    if len(metrics) == 1:
+        axes = [axes]
+
+    ks = sorted(results.keys())
+
+    for ax, metric in zip(axes, metrics):
+        values = [results[k][metric] for k in ks]
+        ax.plot(ks, values, "go-", linewidth=2, markersize=8)
+        ax.set_xlabel("Number of Clusters (K)")
+        ax.set_ylabel(metric_titles.get(metric, metric))
+        ax.set_title(metric_titles.get(metric, metric), fontweight="bold")
+        ax.grid(True, alpha=0.3)
+        ax.set_xticks(ks)
+
+        # Mark optimal K
+        best_k = ks[np.argmin(values)] if metric == "davies_bouldin" else ks[np.argmax(values)]
+        ax.axvline(x=best_k, color="red", linestyle="--", alpha=0.7, label=f"Optimal K={best_k}")
+        ax.legend()
+
+    plt.suptitle("K-Means: Clustering Quality Metrics", fontweight="bold", y=1.02)
+    plt.tight_layout()
+
+    if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path, dpi=150, bbox_inches="tight")
+        print(f"Plot saved to {save_path}")
+
+    return fig
+
+
+def plot_cluster_scatter(
+    X_2d: np.ndarray,
+    labels: np.ndarray,
+    title: str,
+    y_true: Optional[np.ndarray] = None,
+    save_path: Optional[str] = None,
+    ax: Optional[plt.Axes] = None,
+    show_legend: bool = True,
+) -> plt.Axes:
+    """Plot 2D scatter plot of clusters."""
+    own_ax = ax is None
+    if own_ax:
+        fig, ax = plt.subplots(figsize=(10, 8))
+
+    unique_labels = sorted(set(labels))
+
+    for i, label in enumerate(unique_labels):
+        mask = labels == label
+        if label == -1:
+            # Noise points (DBSCAN)
+            color, marker, name, alpha = "gray", "x", "Noise", 0.4
+        else:
+            color = CLUSTER_COLORS[i % len(CLUSTER_COLORS)]
+            marker, name, alpha = "o", f"Cluster {label}", 0.6
+
+        ax.scatter(X_2d[mask, 0], X_2d[mask, 1], c=color, label=name, alpha=alpha, s=15, marker=marker)
+
+    # Overlay true class boundaries
+    if y_true is not None:
+        for true_label in sorted(set(y_true)):
+            mask = y_true == true_label
+            ax.scatter(
+                X_2d[mask, 0], X_2d[mask, 1],
+                facecolors="none", edgecolors=CLASS_COLORS.get(int(true_label), "gray"),
+                linewidth=1.0, s=30, alpha=0.3,
+            )
+
+    ax.set_title(title, fontweight="bold")
+    ax.set_xlabel("Dimension 1")
+    ax.set_ylabel("Dimension 2")
+    if show_legend:
+        ax.legend(title="Cluster", markerscale=2, fontsize=9)
+
+    if own_ax and save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path, dpi=150, bbox_inches="tight")
+        print(f"Plot saved to {save_path}")
+
+    if own_ax:
+        plt.tight_layout()
+
+    return ax
+
+
+def plot_dendrogram(X: np.ndarray, method: str = "ward", save_path: Optional[str] = None) -> plt.Figure:
+    """Plot hierarchical clustering dendrogram. Samples 2000 points if dataset is larger."""
+    if X.shape[0] > 2000:
+        print(f"Dataset size ({X.shape[0]}) > 2000, sampling 2000 points for dendrogram.")
+        indices = np.random.choice(X.shape[0], 2000, replace=False)
+        X_plot = X[indices]
+    else:
+        X_plot = X
+
+    fig, ax = plt.subplots(figsize=(16, 8))
+    linkage_matrix = linkage(X_plot, method=method)
+
+    dendrogram(linkage_matrix, ax=ax, leaf_rotation=90, leaf_font_size=8, show_contracted=True)
+    ax.set_title(f"Hierarchical Clustering Dendrogram ({method} linkage)", fontweight="bold")
+    ax.set_xlabel("Cluster / Sample Index")
+    ax.set_ylabel("Distance")
+
+    if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path, dpi=150, bbox_inches="tight")
+        print(f"Plot saved to {save_path}")
+
+    plt.tight_layout()
+    return fig
+
+
+def plot_algorithm_comparison(all_results: dict[str, dict[str, float]], y_true: Optional[np.ndarray] = None, save_path: Optional[str] = None) -> plt.Figure:
+    """Plot bar charts comparing clustering algorithms across metrics."""
+    # Define metrics to plot
+    unsupervised = ["silhouette", "calinski_harabasz", "davies_bouldin"]
+    supervised = ["adjusted_rand_index", "normalized_mutual_info"]
+
+    if y_true is not None:
+        plot_metrics = unsupervised + supervised
+        titles = {
+            "silhouette": "Silhouette (higher)", "calinski_harabasz": "CH Index (higher)",
+            "davies_bouldin": "DB Index (lower)", "adjusted_rand_index": "ARI (higher)",
+            "normalized_mutual_info": "NMI (higher)",
+        }
+    else:
+        plot_metrics = unsupervised
+        titles = {
+            "silhouette": "Silhouette (higher)", "calinski_harabasz": "CH Index (higher)",
+            "davies_bouldin": "DB Index (lower)",
+        }
+
+    n = len(plot_metrics)
+    fig, axes = plt.subplots(1, n, figsize=(6 * n, 6))
+    if n == 1:
+        axes = [axes]
+
+    algorithms = list(all_results.keys())
+    x_pos = np.arange(len(algorithms))
+    colors = [CLUSTER_COLORS[i] for i in range(len(algorithms))]
+
+    for ax, metric in zip(axes, plot_metrics):
+        values = [all_results[alg].get(metric, np.nan) for alg in algorithms]
+        bars = ax.bar(x_pos, values, color=colors, edgecolor="white")
+
+        # Highlight best bar
+        best_idx = np.nanargmin(values) if metric == "davies_bouldin" else np.nanargmax(values)
+        bars[best_idx].set_edgecolor("gold")
+        bars[best_idx].set_linewidth(3)
+
+        ax.set_xticks(x_pos)
+        ax.set_xticklabels(algorithms, rotation=30, ha="right")
+        ax.set_title(titles.get(metric, metric), fontweight="bold")
+        ax.set_ylabel("Score")
+        ax.grid(True, alpha=0.3, axis="y")
+
+    plt.suptitle("Clustering Algorithm Comparison", fontweight="bold", y=1.02)
+    plt.tight_layout()
+
+    if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path, dpi=150, bbox_inches="tight")
+        print(f"Plot saved to {save_path}")
+
+    return fig
+
+
+def plot_cluster_size_distribution(labels: np.ndarray, title: str, save_path: Optional[str] = None) -> plt.Figure:
+    """Plot bar chart of cluster sizes."""
+    fig, ax = plt.subplots(figsize=(10, 6))
+    unique, counts = np.unique(labels, return_counts=True)
+
+    # Sort by count descending
+    sorted_idx = np.argsort(-counts)
+    unique, counts = unique[sorted_idx], counts[sorted_idx]
+
+    # Assign colors
+    colors = ["gray" if u == -1 else CLUSTER_COLORS[u % len(CLUSTER_COLORS)] for u in unique]
+
+    bars = ax.bar([str(u) for u in unique], counts, color=colors, edgecolor="white")
+    ax.set_xlabel("Cluster ID")
+    ax.set_ylabel("Number of Samples")
+    ax.set_title(title, fontweight="bold")
+
+    # Annotate bars with count and percentage
+    for bar, count in zip(bars, counts):
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 20,
+                f"{count}\n({count / len(labels) * 100:.1f}%)", ha="center", va="bottom", fontsize=9)
+
+    ax.grid(True, alpha=0.3, axis="y")
+    plt.tight_layout()
+
+    if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path, dpi=150, bbox_inches="tight")
+        print(f"Plot saved to {save_path}")
+
+    return fig
+
+
+def compare_clusters_to_classes(labels: np.ndarray, y_true: np.ndarray) -> pd.DataFrame:
+    """Create cross-tabulation of clusters vs true class labels."""
+    return pd.crosstab(pd.Series(labels, name="Cluster"), pd.Series(y_true, name="True Class"))

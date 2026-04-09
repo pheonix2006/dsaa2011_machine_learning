@@ -17,16 +17,16 @@ def download_dataset(data_dir: str = "data") -> None:
     features_path = os.path.join(data_dir, "features.csv")
     targets_path = os.path.join(data_dir, "targets.csv")
 
-    # 检测是否已有数据文件 / Check if data files already exist
+    # Check if data files already exist
     if os.path.isfile(features_path) and os.path.isfile(targets_path):
-        print("Data files already exist, skipping download. / 数据文件已存在，跳过下载。")
+        print("Data files already exist, skipping download.")
         return
 
     os.makedirs(data_dir, exist_ok=True)
 
     from ucimlrepo import fetch_ucirepo
 
-    print("Downloading dataset from UCI (id=697)... / 正在从 UCI 下载数据集...")
+    print("Downloading dataset from UCI (id=697)...")
     dataset = fetch_ucirepo(id=697)
 
     X = dataset.data.features
