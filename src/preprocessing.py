@@ -1,30 +1,19 @@
 """
 Data preprocessing utilities for Student Dropout and Academic Success dataset.
-
-This module provides functions for:
-- Loading and inspecting the dataset
-- Classifying feature types (numerical, binary, nominal)
-- Handling missing values
-- Encoding categorical features (one-hot / label)
-- Standardizing numerical features
-- Running the full preprocessing pipeline
 """
 
 import os
 from typing import Optional
-
-from typing import cast
 
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 
-# ---------------------------------------------------------------------------
+# ============================================================================
 # Feature type classification
-# ---------------------------------------------------------------------------
+# ============================================================================
 
-# Nominal categorical features: encoded as integers but represent categories
 NOMINAL_FEATURES = [
     "Marital Status",
     "Application mode",
@@ -36,7 +25,6 @@ NOMINAL_FEATURES = [
     "Father's occupation",
 ]
 
-# Binary features: already encoded as 0/1
 BINARY_FEATURES = [
     "Daytime/evening attendance",
     "Displaced",
@@ -48,7 +36,6 @@ BINARY_FEATURES = [
     "International",
 ]
 
-# Continuous numerical features (float values with high cardinality)
 CONTINUOUS_FEATURES = [
     "Previous qualification (grade)",
     "Admission grade",
@@ -60,79 +47,49 @@ CONTINUOUS_FEATURES = [
 ]
 
 
-def _get_count_features(df: pd.DataFrame) -> list[str]:
-    """Identify count features (int columns not in BINARY or NOMINAL)."""
-    all_cols = set(df.columns)
-    excluded = set(NOMINAL_FEATURES + BINARY_FEATURES + CONTINUOUS_FEATURES)
-    return sorted(all_cols - excluded)
-
-
 def get_feature_types(df: pd.DataFrame) -> dict[str, list[str]]:
-    """Classify features into numerical, binary, and nominal groups.
+    """Classify features into nominal, binary, count, continuous groups."""
+    excluded = set(NOMINAL_FEATURES + BINARY_FEATURES + CONTINUOUS_FEATURES)
+    count_features = sorted(set(df.columns) - excluded)
 
-    Returns a dict with keys: 'nominal', 'binary', 'count', 'continuous'.
-    """
     return {
         "nominal": [c for c in NOMINAL_FEATURES if c in df.columns],
         "binary": [c for c in BINARY_FEATURES if c in df.columns],
-        "count": _get_count_features(df),
+        "count": count_features,
         "continuous": [c for c in CONTINUOUS_FEATURES if c in df.columns],
     }
 
 
-# ---------------------------------------------------------------------------
+# ============================================================================
 # Data loading
-# ---------------------------------------------------------------------------
+# ============================================================================
+
 
 def load_data(data_dir: str = "data") -> tuple[pd.DataFrame, pd.Series]:
-    """Load features and targets from CSV files.
-
-    Returns:
-        (X, y) where X is the feature DataFrame and y is the target Series
-        with label-encoded target values.
-    """
+    """Load features and targets from CSV files."""
     features_path = os.path.join(data_dir, "features.csv")
     targets_path = os.path.join(data_dir, "targets.csv")
 
     X = pd.read_csv(features_path)
     y_raw = pd.read_csv(targets_path).iloc[:, 0]
 
-    # Encode target labels to integers
     le = LabelEncoder()
-    y = pd.Series(
-        np.array(le.fit_transform(y_raw), dtype=np.int64),
-        name="Target",
-        index=X.index,
-    )
+    y = pd.Series(np.array(le.fit_transform(y_raw), dtype=np.int64), name="Target", index=X.index)
 
     print(f"Loaded {X.shape[0]} samples, {X.shape[1]} features")
-    class_map = dict(zip(
-        np.asarray(le.classes_).tolist(),
-        np.asarray(le.transform(le.classes_)).tolist(),
-    ))
-    print(f"Target classes: {class_map}")
+    print(f"Target classes: {dict(zip(le.classes_, le.transform(le.classes_)))}")
     print(f"Target distribution:\n{y_raw.value_counts().to_string()}")
 
     return X, y
 
 
-# ---------------------------------------------------------------------------
+# ============================================================================
 # Missing values
-# ---------------------------------------------------------------------------
+# ============================================================================
 
-def handle_missing_values(
-    df: pd.DataFrame,
-    strategy: str = "median",
-) -> tuple[pd.DataFrame, dict]:
-    """Handle missing values in the DataFrame.
 
-    Args:
-        df: Input DataFrame.
-        strategy: Fill strategy — 'median', 'mean', or 'drop'.
-
-    Returns:
-        (df_cleaned, info) where info contains missing value statistics.
-    """
+def handle_missing_values(df: pd.DataFrame, strategy: str = "median") -> tuple[pd.DataFrame, dict]:
+    """Fill or drop missing values in the DataFrame."""
     missing = df.isnull().sum()
     missing_cols = missing[missing > 0]
 
@@ -146,14 +103,13 @@ def handle_missing_values(
         print("No missing values found.")
         return df.copy(), info
 
-    print(f"Found {missing.sum()} missing values in {len(missing_cols)} columns.")
-    print(missing_cols)
+    print(f"Found {missing.sum()} missing values in {len(missing_cols)} columns: {missing_cols.to_dict()}")
 
     df_clean = df.copy()
 
     if strategy == "drop":
         df_clean = df_clean.dropna()
-        print(f"Dropped rows with missing values. New shape: {df_clean.shape}")
+        print(f"Dropped rows. New shape: {df_clean.shape}")
     else:
         numeric_cols = df_clean.select_dtypes(include=[np.number]).columns
         fill_value = df_clean[numeric_cols].median() if strategy == "median" else df_clean[numeric_cols].mean()
@@ -163,25 +119,17 @@ def handle_missing_values(
     return df_clean, info
 
 
-# ---------------------------------------------------------------------------
+# ============================================================================
 # Feature encoding
-# ---------------------------------------------------------------------------
+# ============================================================================
+
 
 def encode_features(
     X: pd.DataFrame,
     feature_types: Optional[dict[str, list[str]]] = None,
     method: str = "onehot",
 ) -> pd.DataFrame:
-    """Encode nominal categorical features.
-
-    Args:
-        X: Feature DataFrame.
-        feature_types: Output of get_feature_types(). If None, auto-detects.
-        method: 'onehot' for one-hot encoding, 'label' for label encoding.
-
-    Returns:
-        Encoded DataFrame.
-    """
+    """Encode nominal categorical features (one-hot or label)."""
     if feature_types is None:
         feature_types = get_feature_types(X)
 
@@ -206,9 +154,10 @@ def encode_features(
     return df
 
 
-# ---------------------------------------------------------------------------
+# ============================================================================
 # Standardization
-# ---------------------------------------------------------------------------
+# ============================================================================
+
 
 def standardize_features(
     X: pd.DataFrame,
@@ -216,25 +165,10 @@ def standardize_features(
     fit: bool = True,
     scaler: Optional[StandardScaler] = None,
 ) -> tuple[pd.DataFrame, StandardScaler]:
-    """Standardize numerical features (continuous + count) to zero mean, unit variance.
-
-    Binary and one-hot encoded features are left unchanged.
-
-    Args:
-        X: Feature DataFrame.
-        feature_types: Output of get_feature_types(). If None, auto-detects.
-        fit: Whether to fit the scaler (True for training, False for testing).
-        scaler: Pre-fitted scaler for transform-only mode.
-
-    Returns:
-        (X_scaled, scaler).
-    """
+    """Standardize continuous and count features to zero mean, unit variance."""
     if feature_types is None:
         feature_types = get_feature_types(X)
 
-    # Determine which columns to scale: continuous + count (not binary, not one-hot residuals)
-    # After one-hot encoding, original nominal columns are gone, but new dummy columns exist.
-    # We scale only known continuous columns and count columns that still exist.
     scale_cols = feature_types["continuous"] + feature_types["count"]
     scale_cols = [c for c in scale_cols if c in X.columns]
 
@@ -257,34 +191,28 @@ def standardize_features(
     return df, scaler
 
 
-# ---------------------------------------------------------------------------
+# ============================================================================
 # Full pipeline
-# ---------------------------------------------------------------------------
+# ============================================================================
+
 
 def preprocess_pipeline(
     data_dir: str = "data",
     encode_method: str = "onehot",
     do_standardize: bool = True,
 ) -> tuple[pd.DataFrame, pd.Series, dict]:
-    """Run the full preprocessing pipeline.
-
-    Steps: load → handle missing → encode → standardize.
-
-    Returns:
-        (X_processed, y, meta) where meta contains preprocessing metadata.
-    """
+    """Run full preprocessing: load → missing → encode → standardize."""
     # 1. Load
     X, y = load_data(data_dir)
 
     # 2. Handle missing
     X, missing_info = handle_missing_values(X)
 
-    # 3. Identify feature types (before encoding)
+    # 3. Identify feature types
     feature_types = get_feature_types(X)
-    print(f"\nFeature types: nominal={len(feature_types['nominal'])}, "
-          f"binary={len(feature_types['binary'])}, "
-          f"count={len(feature_types['count'])}, "
-          f"continuous={len(feature_types['continuous'])}")
+    ft = feature_types
+    print(f"\nFeature types: nominal={len(ft['nominal'])}, binary={len(ft['binary'])}, "
+          f"count={len(ft['count'])}, continuous={len(ft['continuous'])}")
 
     # 4. Encode
     X = encode_features(X, feature_types, method=encode_method)
