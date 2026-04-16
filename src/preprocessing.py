@@ -10,10 +10,6 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 
-# ============================================================================
-# Feature type classification
-# ============================================================================
-
 NOMINAL_FEATURES = [
     "Marital Status",
     "Application mode",
@@ -168,40 +164,3 @@ def standardize_features(X: pd.DataFrame, feature_types: Optional[dict[str, list
         print(f"Standardized {len(scale_cols)} numerical features (transform).")
 
     return df, scaler
-
-
-# Full pipeline
-
-def preprocess_pipeline(data_dir: str = "data", encode_method: str = "onehot", do_standardize: bool = True):
-    """Run full preprocessing: load → missing → encode → standardize."""
-    # 1. Load
-    X, y = load_data(data_dir)
-
-    # 2. Handle missing
-    X, missing_info = handle_missing_values(X)
-
-    # 3. Identify feature types
-    feature_types = get_feature_types(X)
-    ft = feature_types
-    print(f"\nFeature types: nominal={len(ft['nominal'])}, binary={len(ft['binary'])}, "
-          f"count={len(ft['count'])}, continuous={len(ft['continuous'])}")
-
-    # 4. Encode
-    X = encode_features(X, feature_types, method=encode_method)
-
-    # 5. Standardize
-    scaler = None
-    if do_standardize:
-        X, scaler = standardize_features(X, feature_types, fit=True)
-
-    meta = {
-        "feature_types": feature_types,
-        "missing_info": missing_info,
-        "encode_method": encode_method,
-        "standardized": do_standardize,
-        "scaler": scaler,
-        "original_columns": list(X.columns),
-    }
-
-    print(f"\nFinal shape: {X.shape}")
-    return X, y, meta

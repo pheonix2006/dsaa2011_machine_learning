@@ -145,15 +145,42 @@ def target_encode_column(train_series: pd.Series, test_series: pd.Series, y_trai
     return train_enc, test_enc
 
 
-def apply_target_encoding(X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, columns: list[str], smoothing: float = 10.0):
-    """Target-encode multiple columns (fit on train, transform both)."""
+# Out-of-Fold Target Encoding (avoids training-set leakage)
+
+def _target_encode_column_oof(train_series: pd.Series, y_train: pd.Series, n_folds: int, smoothing: float):
+    """OOF target-encode a single column: each sample is encoded using K-1 folds."""
+    from sklearn.model_selection import KFold
+
+    train_enc = pd.Series(np.nan, index=train_series.index)
+    kf = KFold(n_splits=n_folds, shuffle=True, random_state=42)
+
+    for train_idx, val_idx in kf.split(train_series):
+        y_kf = y_train.iloc[train_idx]
+        series_kf = train_series.iloc[train_idx]
+        val_series = train_series.iloc[val_idx]
+
+        global_mean = y_kf.mean()
+        temp = pd.DataFrame({"cat": series_kf, "y": y_kf})
+        agg = temp.groupby("cat")["y"].agg(["mean", "count"])
+        smoothed = (agg["count"] * agg["mean"] + smoothing * global_mean) / (agg["count"] + smoothing)
+        encoding_map = smoothed.to_dict()
+
+        train_enc.iloc[val_idx] = val_series.map(encoding_map).fillna(global_mean)
+
+    train_enc = train_enc.fillna(y_train.mean())
+    return train_enc
+
+
+def apply_target_encoding_oof(X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, columns: list[str], n_folds: int = 5, smoothing: float = 10.0):
+    """OOF target-encode multiple columns: fit K-fold on train, full mean on test."""
     X_train = X_train.copy()
     X_test = X_test.copy()
 
     for col in columns:
         if col not in X_train.columns:
             continue
-        train_enc, test_enc = target_encode_column(X_train[col], X_test[col], y_train, smoothing=smoothing)
+        train_enc = _target_encode_column_oof(X_train[col], y_train, n_folds=n_folds, smoothing=smoothing)
+        _, test_enc = target_encode_column(X_train[col], X_test[col], y_train, smoothing=smoothing)
         X_train[col] = train_enc.values
         X_test[col] = test_enc.values
 

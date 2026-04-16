@@ -9,28 +9,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.manifold import TSNE
 
-
-# ============================================================================
-# Color scheme
-# ============================================================================
-
 CLASS_COLORS = {0: "#e74c3c", 1: "#f39c12", 2: "#2ecc71"}
 CLASS_NAMES = {0: "Dropout", 1: "Enrolled", 2: "Graduate"}
 
 
 # ============================================================================
 # t-SNE
-# ============================================================================
 
-
-def compute_tsne(
-    X: np.ndarray,
-    perplexity: int = 30,
-    n_components: int = 2,
-    random_state: int = 42,
-    max_iter: int = 1000,
-    learning_rate: str | float = "auto",
-) -> np.ndarray:
+def compute_tsne(X: np.ndarray, perplexity: int = 30, n_components: int = 2, random_state: int = 42, max_iter: int = 1000, learning_rate: str | float = "auto"):
     """Run t-SNE dimensionality reduction."""
     tsne = TSNE(
         n_components=n_components,
@@ -45,19 +31,9 @@ def compute_tsne(
     return embedding
 
 
-# ============================================================================
 # 2D Scatter Plots
-# ============================================================================
 
-
-def plot_tsne_2d(
-    embedding: np.ndarray,
-    labels: np.ndarray,
-    perplexity: int = 30,
-    save_path: Optional[str] = None,
-    ax: Optional[plt.Axes] = None,
-    show_legend: bool = True,
-) -> plt.Axes:
+def plot_tsne_2d(embedding: np.ndarray, labels: np.ndarray, perplexity: int = 30, save_path: Optional[str] = None, ax: Optional[plt.Axes] = None, show_legend: bool = True):
     """Plot 2D t-SNE scatter plot colored by class."""
     own_ax = ax is None
     if own_ax:
@@ -90,17 +66,9 @@ def plot_tsne_2d(
     return ax
 
 
-# ============================================================================
 # 3D Scatter Plot
-# ============================================================================
 
-
-def plot_tsne_3d(
-    embedding: np.ndarray,
-    labels: np.ndarray,
-    perplexity: int = 30,
-    save_path: Optional[str] = None,
-) -> plt.Figure:
+def plot_tsne_3d(embedding: np.ndarray, labels: np.ndarray, perplexity: int = 30, save_path: Optional[str] = None):
     """Plot 3D t-SNE scatter plot colored by class."""
     fig = plt.figure(figsize=(12, 9))
     ax = fig.add_subplot(111, projection="3d")
@@ -129,16 +97,9 @@ def plot_tsne_3d(
     return fig
 
 
-# ============================================================================
 # Perplexity Comparison
-# ============================================================================
 
-
-def plot_perplexity_comparison(
-    results: dict[int, np.ndarray],
-    labels: np.ndarray,
-    save_path: Optional[str] = None,
-) -> plt.Figure:
+def plot_perplexity_comparison(results: dict[int, np.ndarray], labels: np.ndarray, save_path: Optional[str] = None):
     """Plot grid comparing t-SNE results at different perplexity values."""
     perplexities = sorted(results.keys())
     n = len(perplexities)
