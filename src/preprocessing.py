@@ -47,7 +47,7 @@ CONTINUOUS_FEATURES = [
 ]
 
 
-def get_feature_types(df: pd.DataFrame) -> dict[str, list[str]]:
+def get_feature_types(df: pd.DataFrame):
     """Classify features into nominal, binary, count, continuous groups."""
     excluded = set(NOMINAL_FEATURES + BINARY_FEATURES + CONTINUOUS_FEATURES)
     count_features = sorted(set(df.columns) - excluded)
@@ -60,12 +60,9 @@ def get_feature_types(df: pd.DataFrame) -> dict[str, list[str]]:
     }
 
 
-# ============================================================================
 # Data loading
-# ============================================================================
 
-
-def load_data(data_dir: str = "data") -> tuple[pd.DataFrame, pd.Series]:
+def load_data(data_dir: str = "data"):
     """Load features and targets from CSV files."""
     features_path = os.path.join(data_dir, "features.csv")
     targets_path = os.path.join(data_dir, "targets.csv")
@@ -83,12 +80,9 @@ def load_data(data_dir: str = "data") -> tuple[pd.DataFrame, pd.Series]:
     return X, y
 
 
-# ============================================================================
 # Missing values
-# ============================================================================
 
-
-def handle_missing_values(df: pd.DataFrame, strategy: str = "median") -> tuple[pd.DataFrame, dict]:
+def handle_missing_values(df: pd.DataFrame, strategy: str = "median"):
     """Fill or drop missing values in the DataFrame."""
     missing = df.isnull().sum()
     missing_cols = missing[missing > 0]
@@ -119,16 +113,9 @@ def handle_missing_values(df: pd.DataFrame, strategy: str = "median") -> tuple[p
     return df_clean, info
 
 
-# ============================================================================
 # Feature encoding
-# ============================================================================
 
-
-def encode_features(
-    X: pd.DataFrame,
-    feature_types: Optional[dict[str, list[str]]] = None,
-    method: str = "onehot",
-) -> pd.DataFrame:
+def encode_features(X: pd.DataFrame, feature_types: Optional[dict[str, list[str]]] = None, method: str = "onehot"):
     """Encode nominal categorical features (one-hot or label)."""
     if feature_types is None:
         feature_types = get_feature_types(X)
@@ -154,17 +141,9 @@ def encode_features(
     return df
 
 
-# ============================================================================
 # Standardization
-# ============================================================================
 
-
-def standardize_features(
-    X: pd.DataFrame,
-    feature_types: Optional[dict[str, list[str]]] = None,
-    fit: bool = True,
-    scaler: Optional[StandardScaler] = None,
-) -> tuple[pd.DataFrame, StandardScaler]:
+def standardize_features(X: pd.DataFrame, feature_types: Optional[dict[str, list[str]]] = None, fit: bool = True, scaler: Optional[StandardScaler] = None):
     """Standardize continuous and count features to zero mean, unit variance."""
     if feature_types is None:
         feature_types = get_feature_types(X)
@@ -191,16 +170,9 @@ def standardize_features(
     return df, scaler
 
 
-# ============================================================================
 # Full pipeline
-# ============================================================================
 
-
-def preprocess_pipeline(
-    data_dir: str = "data",
-    encode_method: str = "onehot",
-    do_standardize: bool = True,
-) -> tuple[pd.DataFrame, pd.Series, dict]:
+def preprocess_pipeline(data_dir: str = "data", encode_method: str = "onehot", do_standardize: bool = True):
     """Run full preprocessing: load → missing → encode → standardize."""
     # 1. Load
     X, y = load_data(data_dir)

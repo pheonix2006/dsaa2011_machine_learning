@@ -8,25 +8,20 @@ this script skips downloading to avoid redundant network requests.
 import os
 
 
-def download_dataset(data_dir: str = "data") -> None:
+def download_dataset(data_dir: str = "data"):
     """Download UCI dataset (id=697) if CSV files do not already exist.
-
-    Args:
-        data_dir: Directory to save the CSV files.
     """
     features_path = os.path.join(data_dir, "features.csv")
     targets_path = os.path.join(data_dir, "targets.csv")
 
     # Check if data files already exist
     if os.path.isfile(features_path) and os.path.isfile(targets_path):
-        print("Data files already exist, skipping download.")
+        print("Data files already exist.")
         return
 
     os.makedirs(data_dir, exist_ok=True)
 
     from ucimlrepo import fetch_ucirepo
-
-    print("Downloading dataset from UCI (id=697)...")
     dataset = fetch_ucirepo(id=697)
 
     X = dataset.data.features

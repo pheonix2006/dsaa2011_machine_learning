@@ -7,12 +7,9 @@ import pandas as pd
 from sklearn.feature_selection import SelectKBest, mutual_info_classif
 
 
-# ============================================================================
 # Academic Features
-# ============================================================================
 
-
-def add_academic_features(df: pd.DataFrame) -> pd.DataFrame:
+def add_academic_features(df: pd.DataFrame):
     """Add academic performance derived features."""
     df = df.copy()
 
@@ -45,12 +42,9 @@ def add_academic_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ============================================================================
 # Socioeconomic Features
-# ============================================================================
 
-
-def add_socioeconomic_features(df: pd.DataFrame) -> pd.DataFrame:
+def add_socioeconomic_features(df: pd.DataFrame):
     """Add socioeconomic derived features."""
     df = df.copy()
 
@@ -67,12 +61,9 @@ def add_socioeconomic_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ============================================================================
 # Financial Risk Features
-# ============================================================================
 
-
-def add_financial_risk_features(df: pd.DataFrame) -> pd.DataFrame:
+def add_financial_risk_features(df: pd.DataFrame):
     """Add financial risk derived features."""
     df = df.copy()
 
@@ -85,12 +76,9 @@ def add_financial_risk_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ============================================================================
 # Demographic Features
-# ============================================================================
 
-
-def add_demographic_features(df: pd.DataFrame) -> pd.DataFrame:
+def add_demographic_features(df: pd.DataFrame):
     """Add age and demographic derived features."""
     df = df.copy()
 
@@ -102,12 +90,9 @@ def add_demographic_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ============================================================================
 # Macroeconomic Features
-# ============================================================================
 
-
-def add_macroeconomic_features(df: pd.DataFrame) -> pd.DataFrame:
+def add_macroeconomic_features(df: pd.DataFrame):
     """Add macroeconomic derived features."""
     df = df.copy()
 
@@ -116,12 +101,9 @@ def add_macroeconomic_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ============================================================================
 # Application Features
-# ============================================================================
 
-
-def add_application_features(df: pd.DataFrame) -> pd.DataFrame:
+def add_application_features(df: pd.DataFrame):
     """Add application behavior derived features."""
     df = df.copy()
 
@@ -132,12 +114,9 @@ def add_application_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ============================================================================
 # All Engineered Features
-# ============================================================================
 
-
-def add_all_engineered_features(df: pd.DataFrame) -> pd.DataFrame:
+def add_all_engineered_features(df: pd.DataFrame):
     """Apply all feature engineering transformations."""
     df = add_academic_features(df)
     df = add_socioeconomic_features(df)
@@ -148,17 +127,9 @@ def add_all_engineered_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ============================================================================
 # Target Encoding
-# ============================================================================
 
-
-def target_encode_column(
-    train_series: pd.Series,
-    test_series: pd.Series,
-    y_train: pd.Series,
-    smoothing: float = 10.0,
-) -> tuple[pd.Series, pd.Series]:
+def target_encode_column(train_series: pd.Series, test_series: pd.Series, y_train: pd.Series, smoothing: float = 10.0):
     """Target-encode a categorical column: replace each category with smoothed target mean."""
     global_mean = y_train.mean()
 
@@ -174,13 +145,7 @@ def target_encode_column(
     return train_enc, test_enc
 
 
-def apply_target_encoding(
-    X_train: pd.DataFrame,
-    X_test: pd.DataFrame,
-    y_train: pd.Series,
-    columns: list[str],
-    smoothing: float = 10.0,
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+def apply_target_encoding(X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, columns: list[str], smoothing: float = 10.0):
     """Target-encode multiple columns (fit on train, transform both)."""
     X_train = X_train.copy()
     X_test = X_test.copy()
@@ -195,24 +160,9 @@ def apply_target_encoding(
     return X_train, X_test
 
 
-# ============================================================================
-# Binning
-# ============================================================================
-
-
-def bin_continuous(df: pd.DataFrame, column: str, bins: int | list[float], labels: list[str] | None = None) -> pd.DataFrame:
-    """Bin a continuous column into discrete intervals."""
-    df = df.copy()
-    df[f"{column}_bin"] = pd.cut(df[column], bins=bins, labels=labels, include_lowest=True)
-    return df
-
-
-# ============================================================================
 # Feature Selection
-# ============================================================================
 
-
-def select_features_by_importance(X: pd.DataFrame, model, top_k: int = 60) -> tuple[pd.DataFrame, list]:
+def select_features_by_importance(X: pd.DataFrame, model, top_k: int = 60):
     """Select top-k features by importance from a fitted tree model."""
     if not hasattr(model, "feature_importances_"):
         raise ValueError("Model does not have feature_importances_ attribute")
@@ -222,35 +172,3 @@ def select_features_by_importance(X: pd.DataFrame, model, top_k: int = 60) -> tu
 
     print(f"Selected top {top_k} features out of {X.shape[1]}")
     return X[top_features], top_features
-
-
-def remove_low_variance_features(X: pd.DataFrame, threshold: float = 0.01) -> tuple[pd.DataFrame, list]:
-    """Remove features with variance below threshold."""
-    variances = X.var()
-    low_var = variances[variances < threshold]
-    removed = list(low_var.index)
-
-    print(f"Removed {len(removed)} low-variance features (var < {threshold})")
-    return X.drop(columns=removed), removed
-
-
-def remove_highly_correlated_features(X: pd.DataFrame, threshold: float = 0.95) -> tuple[pd.DataFrame, list]:
-    """Remove one of each pair with correlation above threshold."""
-    corr = X.corr().abs()
-    upper = corr.where(np.triu(np.ones(corr.shape), k=1).astype(bool))
-
-    to_drop = [col for col in upper.columns if any(upper[col] > threshold)]
-
-    print(f"Removed {len(to_drop)} highly correlated features (|r| > {threshold})")
-    return X.drop(columns=to_drop), to_drop
-
-
-def select_top_k_features(X: pd.DataFrame, y: pd.Series, k: int = 30) -> tuple[pd.DataFrame, list]:
-    """Select top k features by mutual information."""
-    selector = SelectKBest(mutual_info_classif, k=k)
-    selector.fit(X, y)
-
-    selected = list(X.columns[selector.get_support()])
-
-    print(f"Selected top {k} features by mutual information")
-    return X[selected], selected
