@@ -35,45 +35,34 @@ CLUSTER_COLORS = [
 ]
 
 
-# ============================================================================
 # Clustering Algorithms
-# ============================================================================
 
-
-def apply_kmeans(X: np.ndarray, n_clusters: int, random_state: int = 42) -> tuple[np.ndarray, KMeans]:
+def apply_kmeans(X: np.ndarray, n_clusters: int, random_state: int = 42):
     """Apply K-Means clustering and return labels and model."""
     model = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=10, algorithm="lloyd")
     labels = model.fit_predict(X)
     return labels, model
 
 
-def apply_agglomerative(X: np.ndarray, n_clusters: int, linkage: str = "ward") -> tuple[np.ndarray, AgglomerativeClustering]:
+def apply_agglomerative(X: np.ndarray, n_clusters: int, linkage: str = "ward"):
     """Apply Agglomerative Hierarchical Clustering and return labels and model."""
     model = AgglomerativeClustering(n_clusters=n_clusters, linkage=linkage)
     labels = model.fit_predict(X)
     return labels, model
 
 
-def apply_dbscan(X: np.ndarray, eps: float = 0.5, min_samples: int = 5) -> tuple[np.ndarray, DBSCAN]:
+def apply_dbscan(X: np.ndarray, eps: float = 0.5, min_samples: int = 5):
     """Apply DBSCAN clustering and return labels and model. -1 = noise."""
     model = DBSCAN(eps=eps, min_samples=min_samples)
     labels = model.fit_predict(X)
     return labels, model
 
 
-# ============================================================================
 # Cluster Evaluation Metrics
-# ============================================================================
 
-
-def evaluate_clustering(X: np.ndarray, labels: np.ndarray, y_true: Optional[np.ndarray] = None) -> dict[str, float]:
-    """Evaluate clustering quality with multiple metrics.
-
-    Metrics:
-        silhouette: higher is better (-1 to 1)
-        calinski_harabasz: higher is better
-        davies_bouldin: lower is better
-        adjusted_rand_index, normalized_mutual_info: higher is better (if y_true provided)
+def evaluate_clustering(X: np.ndarray, labels: np.ndarray, y_true: Optional[np.ndarray] = None):
+    """Evaluate clustering quality with multiple metrics 
+    including silhouette, calinski_harabasz, davies_bouldin, adjusted_rand_index, normalized_mutual_info.
     """
     # Filter out noise points (DBSCAN label = -1)
     mask = labels >= 0
@@ -101,7 +90,7 @@ def evaluate_clustering(X: np.ndarray, labels: np.ndarray, y_true: Optional[np.n
     return metrics
 
 
-def find_optimal_kmeans(X: np.ndarray, k_range: range, random_state: int = 42) -> dict[int, dict[str, float]]:
+def find_optimal_kmeans(X: np.ndarray, k_range: range, random_state: int = 42):
     """Find optimal K for K-Means by computing metrics for each K."""
     results = {}
     for k in k_range:
@@ -118,12 +107,9 @@ def find_optimal_kmeans(X: np.ndarray, k_range: range, random_state: int = 42) -
     return results
 
 
-# ============================================================================
 # Visualization
-# ============================================================================
 
-
-def plot_elbow_method(results: dict[int, dict[str, float]], save_path: Optional[str] = None) -> plt.Figure:
+def plot_elbow_method(results: dict[int, dict[str, float]], save_path: Optional[str] = None):
     """Plot inertia curve for elbow method."""
     fig, ax = plt.subplots(figsize=(10, 6))
     ks = sorted(results.keys())
@@ -145,12 +131,12 @@ def plot_elbow_method(results: dict[int, dict[str, float]], save_path: Optional[
     return fig
 
 
-def plot_metric_comparison(results: dict[int, dict[str, float]], metrics: list[str], save_path: Optional[str] = None) -> plt.Figure:
+def plot_metric_comparison(results: dict[int, dict[str, float]], metrics: list[str], save_path: Optional[str] = None):
     """Plot clustering metrics across different K values."""
     metric_titles = {
-        "silhouette": "Silhouette Score (higher is better)",
-        "calinski_harabasz": "Calinski-Harabasz Index (higher is better)",
-        "davies_bouldin": "Davies-Bouldin Index (lower is better)",
+        "silhouette": "Silhouette Score",
+        "calinski_harabasz": "Calinski-Harabasz Index",
+        "davies_bouldin": "Davies-Bouldin Index",
     }
 
     fig, axes = plt.subplots(1, len(metrics), figsize=(6 * len(metrics), 5))
@@ -184,15 +170,7 @@ def plot_metric_comparison(results: dict[int, dict[str, float]], metrics: list[s
     return fig
 
 
-def plot_cluster_scatter(
-    X_2d: np.ndarray,
-    labels: np.ndarray,
-    title: str,
-    y_true: Optional[np.ndarray] = None,
-    save_path: Optional[str] = None,
-    ax: Optional[plt.Axes] = None,
-    show_legend: bool = True,
-) -> plt.Axes:
+def plot_cluster_scatter(X_2d: np.ndarray, labels: np.ndarray, title: str, y_true: Optional[np.ndarray] = None, save_path: Optional[str] = None, ax: Optional[plt.Axes] = None, show_legend: bool = True):
     """Plot 2D scatter plot of clusters."""
     own_ax = ax is None
     if own_ax:
@@ -238,33 +216,7 @@ def plot_cluster_scatter(
     return ax
 
 
-def plot_dendrogram(X: np.ndarray, method: str = "ward", save_path: Optional[str] = None) -> plt.Figure:
-    """Plot hierarchical clustering dendrogram. Samples 2000 points if dataset is larger."""
-    if X.shape[0] > 2000:
-        print(f"Dataset size ({X.shape[0]}) > 2000, sampling 2000 points for dendrogram.")
-        indices = np.random.choice(X.shape[0], 2000, replace=False)
-        X_plot = X[indices]
-    else:
-        X_plot = X
-
-    fig, ax = plt.subplots(figsize=(16, 8))
-    linkage_matrix = linkage(X_plot, method=method)
-
-    dendrogram(linkage_matrix, ax=ax, leaf_rotation=90, leaf_font_size=8, show_contracted=True)
-    ax.set_title(f"Hierarchical Clustering Dendrogram ({method} linkage)", fontweight="bold")
-    ax.set_xlabel("Cluster / Sample Index")
-    ax.set_ylabel("Distance")
-
-    if save_path:
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        plt.savefig(save_path, dpi=150, bbox_inches="tight")
-        print(f"Plot saved to {save_path}")
-
-    plt.tight_layout()
-    return fig
-
-
-def plot_algorithm_comparison(all_results: dict[str, dict[str, float]], y_true: Optional[np.ndarray] = None, save_path: Optional[str] = None) -> plt.Figure:
+def plot_algorithm_comparison(all_results: dict[str, dict[str, float]], y_true: Optional[np.ndarray] = None, save_path: Optional[str] = None):
     """Plot bar charts comparing clustering algorithms across metrics."""
     # Define metrics to plot
     unsupervised = ["silhouette", "calinski_harabasz", "davies_bouldin"]
@@ -319,7 +271,7 @@ def plot_algorithm_comparison(all_results: dict[str, dict[str, float]], y_true: 
     return fig
 
 
-def plot_cluster_size_distribution(labels: np.ndarray, title: str, save_path: Optional[str] = None) -> plt.Figure:
+def plot_cluster_size_distribution(labels: np.ndarray, title: str, save_path: Optional[str] = None):
     """Plot bar chart of cluster sizes."""
     fig, ax = plt.subplots(figsize=(10, 6))
     unique, counts = np.unique(labels, return_counts=True)
@@ -352,6 +304,6 @@ def plot_cluster_size_distribution(labels: np.ndarray, title: str, save_path: Op
     return fig
 
 
-def compare_clusters_to_classes(labels: np.ndarray, y_true: np.ndarray) -> pd.DataFrame:
+def compare_clusters_to_classes(labels: np.ndarray, y_true: np.ndarray):
     """Create cross-tabulation of clusters vs true class labels."""
     return pd.crosstab(pd.Series(labels, name="Cluster"), pd.Series(y_true, name="True Class"))
