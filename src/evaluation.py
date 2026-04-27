@@ -16,7 +16,7 @@ from sklearn.metrics import (
     roc_curve,
     auc,
 )
-from sklearn.model_selection import cross_val_score, learning_curve, validation_curve
+from sklearn.model_selection import cross_val_score, learning_curve, validation_curve, GridSearchCV
 from sklearn.preprocessing import label_binarize
 
 
@@ -197,3 +197,29 @@ def metrics_comparison_table(results: dict[str, dict]) -> pd.DataFrame:
     for name, metrics in results.items():
         rows.append({"Model": name, **metrics})
     return pd.DataFrame(rows)
+
+
+def tune_model(
+    model,
+    param_grid: dict,
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    cv: int = 5,
+    scoring: str = "f1_macro",
+) -> dict:
+    """Tune model hyperparameters via GridSearchCV."""
+    gs = GridSearchCV(
+        model,
+        param_grid,
+        cv=cv,
+        scoring=scoring,
+        n_jobs=-1,
+        refit=True,
+    )
+    gs.fit(X_train, y_train)
+    return {
+        "best_estimator": gs.best_estimator_,
+        "best_params": gs.best_params_,
+        "best_score": gs.best_score_,
+        "cv_results": gs.cv_results_,
+    }
