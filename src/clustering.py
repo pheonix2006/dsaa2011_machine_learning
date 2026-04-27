@@ -307,3 +307,68 @@ def plot_cluster_size_distribution(labels: np.ndarray, title: str, save_path: Op
 def compare_clusters_to_classes(labels: np.ndarray, y_true: np.ndarray):
     """Create cross-tabulation of clusters vs true class labels."""
     return pd.crosstab(pd.Series(labels, name="Cluster"), pd.Series(y_true, name="True Class"))
+
+
+def plot_dendrogram(
+    X: np.ndarray,
+    method: str = "ward",
+    max_d: Optional[float] = None,
+    save_path: Optional[str] = None,
+) -> plt.Figure:
+    """Plot hierarchical clustering dendrogram."""
+    Z = linkage(X, method=method)
+    fig, ax = plt.subplots(figsize=(14, 7))
+    dendrogram(
+        Z,
+        truncate_mode="lastp",
+        p=30,
+        leaf_rotation=90,
+        leaf_font_size=9,
+        ax=ax,
+    )
+    if max_d is not None:
+        ax.axhline(y=max_d, color="r", linestyle="--", label=f"Cut at d={max_d}")
+        ax.legend()
+    ax.set_title(f"Hierarchical Clustering Dendrogram ({method} linkage)", fontweight="bold")
+    ax.set_xlabel("Sample Index (or Cluster Size)")
+    ax.set_ylabel("Distance")
+    ax.grid(True, alpha=0.3, axis="y")
+    plt.tight_layout()
+
+    if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path, dpi=150, bbox_inches="tight")
+        print(f"Plot saved to {save_path}")
+
+    return fig
+
+
+def rank_algorithms(all_results: dict[str, dict[str, float]]) -> list[tuple[str, float]]:
+    """Rank clustering algorithms by normalized composite score.
+
+    Metrics are min-max normalized to [0,1], DB Index inverted (lower=better),
+    then summed with equal weights.
+    """
+    metrics_keys = ["silhouette", "calinski_harabasz", "davies_bouldin",
+                    "adjusted_rand_index", "normalized_mutual_info"]
+    present_keys = [k for k in metrics_keys
+                    if all(k in v for v in all_results.values())]
+    if not present_keys:
+        return [(name, 0.0) for name in all_results]
+
+    raw = {name: {k: res[k] for k in present_keys} for name, res in all_results.items()}
+
+    normalized: dict[str, dict[str, float]] = {name: {} for name in raw}
+    for key in present_keys:
+        values = [raw[name][key] for name in raw]
+        vmin, vmax = min(values), max(values)
+        span = vmax - vmin if vmax != vmin else 1.0
+        for name in raw:
+            norm_val = (raw[name][key] - vmin) / span
+            if key == "davies_bouldin":
+                norm_val = 1.0 - norm_val
+            normalized[name][key] = norm_val
+
+    scores = {name: sum(normalized[name].values()) for name in normalized}
+    ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+    return ranked
