@@ -22,7 +22,7 @@ from sklearn.tree import DecisionTreeClassifier
 CLASS_NAMES = {0: "Dropout", 1: "Enrolled", 2: "Graduate"}
 MODEL_REGISTRY = {
     "dt": lambda **kw: DecisionTreeClassifier(**{**{"random_state": 42, "max_depth": 10}, **kw}),
-    "lr": lambda **kw: LogisticRegression(**{**{"random_state": 42, "max_iter": 5000}, **kw}),
+    "lr": lambda **kw: LogisticRegression(**{**{"random_state": 42, "max_iter": 10000}, **kw}),
     "svm": lambda **kw: SVC(**{**{"random_state": 42, "kernel": "rbf", "probability": True}, **kw}),
 }
 
