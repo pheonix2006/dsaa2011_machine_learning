@@ -10,11 +10,9 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import (
     accuracy_score,
-    classification_report,
     f1_score,
     precision_score,
     recall_score,
-    roc_auc_score,
     roc_curve,
     auc,
 )

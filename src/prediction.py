@@ -22,7 +22,7 @@ from sklearn.tree import DecisionTreeClassifier
 CLASS_NAMES = {0: "Dropout", 1: "Enrolled", 2: "Graduate"}
 MODEL_REGISTRY = {
     "dt": lambda **kw: DecisionTreeClassifier(**{**{"random_state": 42, "max_depth": 10}, **kw}),
-    "lr": lambda **kw: LogisticRegression(**{**{"random_state": 42, "max_iter": 1000}, **kw}),
+    "lr": lambda **kw: LogisticRegression(**{**{"random_state": 42, "max_iter": 5000}, **kw}),
     "svm": lambda **kw: SVC(**{**{"random_state": 42, "kernel": "rbf", "probability": True}, **kw}),
 }
 
@@ -99,7 +99,7 @@ def plot_decision_boundary(
     colors = ["#e74c3c", "#f39c12", "#2ecc71"]
     for label in sorted(set(y)):
         mask = y == label
-        ax.scatter(X_2d[mask, 0], X_2d[mask, 1], c=colors[label], label=CLASS_NAMES[label], alpha=0.6, s=15)
+        ax.scatter(X_2d[mask, 0], X_2d[mask, 1], c=colors[int(label)], label=CLASS_NAMES[int(label)], alpha=0.6, s=15)
     ax.set_title(title, fontweight="bold")
     ax.set_xlabel("Dimension 1")
     ax.set_ylabel("Dimension 2")
