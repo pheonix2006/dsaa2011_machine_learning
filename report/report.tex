@@ -1,0 +1,148 @@
+\documentclass[10pt,twocolumn]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+
+\title{Student Dropout Prediction: A Machine Learning Analysis\\
+\large DSAA2011 (L01) Course Project --- HKUST(GZ) 2026 Spring}
+\author{[TODO: Group ID and Member Names]}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We analyze the UCI Student Dropout and Academic Success dataset (4,424 samples, 36 features, 3 classes) using a complete machine learning pipeline encompassing data preprocessing, dimensionality reduction, clustering, supervised classification, and model evaluation. Our best-performing model achieves competitive F1-scores through hyperparameter tuning guided by validation curves. We find that academic performance features are the strongest predictors, and the ``Enrolled'' class is consistently the hardest to classify.
+\end{abstract}
+
+% ====================
+\section{Introduction}
+
+The Student Dropout and Academic Success dataset from the UCI Machine Learning Repository contains 4,424 instances of students enrolled in various undergraduate programs at a Portuguese higher education institution. Each instance is described by 36 features covering demographics, socioeconomic background, and academic performance across the first and second semesters. The classification target has three categories: \textbf{Dropout} (32.1\%), \textbf{Enrolled} (18.0\%), and \textbf{Graduate} (49.9\%).
+
+Our objectives are: (1) explore data structure through visualization and clustering; (2) train and evaluate supervised classifiers; (3) improve models via validation-driven tuning; (4) investigate feature importance and ensemble methods.
+
+% ====================
+\section{Mandatory Tasks}
+
+\subsection{Data Preprocessing}
+
+We classified the 36 raw features into four types: \textit{nominal} (8 features, one-hot encoded), \textit{binary} (8 features, kept as 0/1), \textit{continuous} (7 features), and \textit{count} (13 features). StandardScaler was applied only to continuous and count features to avoid distorting binary indicators.
+
+Feature engineering produced 22 additional domain features across six groups: academic ratios (approval rates, grade improvement), socioeconomic indicators, financial risk flags, demographic categories, macroeconomic indices, and application behavior features. Out-of-fold target encoding was used for high-cardinality categorical features to prevent data leakage.
+
+The dataset was split 70/15/15 into training, validation, and test sets. Feature selection retained the top-60 features by tree-based importance.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../data/plots/01_target_distribution.png}
+\caption{Target class distribution across the dataset.}
+\label{fig:target_dist}
+\end{figure}
+
+\subsection{Data Visualization (t-SNE)}
+
+We applied t-SNE with perplexity values of 5, 30, 50, and 100. The 2D projection at perplexity=30 (Figure~\ref{fig:tsne}) reveals that Graduate students form a relatively compact region, while Dropout students cluster separately. Enrolled students are scattered between both groups, consistent with their transitional academic status.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../data/plots/04_tsne_2d_best.png}
+\caption{t-SNE 2D projection (perplexity=30) colored by class.}
+\label{fig:tsne}
+\end{figure}
+
+\subsection{Clustering Analysis}
+
+Three algorithms were compared: K-Means, Agglomerative Hierarchical Clustering (ward, complete, average, single linkage), and DBSCAN.
+
+K-Means with K=3 achieved the best composite score across five normalized metrics (Silhouette, Calinski-Harabasz, Davies-Bouldin, ARI, NMI). DBSCAN classified most points as noise at tested parameters, confirming that this high-dimensional dataset lacks clearly separated density clusters. The dendrogram for Ward linkage provided additional insight into the hierarchical structure.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../data/plots/09_algorithm_comparison.png}
+\caption{Clustering algorithm comparison across five metrics.}
+\label{fig:clustering_comparison}
+\end{figure}
+
+\subsection{Prediction: Training and Testing}
+
+We trained three classifiers: Decision Tree (DT), Logistic Regression (LR), and SVM with RBF kernel. Models were evaluated on training, test, and entire sets.
+
+Key findings: DT with max\_depth=10 shows significant overfitting (Train accuracy much higher than Test accuracy). LR provides stable generalization with minimal train-test gap. SVM achieves intermediate performance.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../data/plots/04_confusion_matrices_test.png}
+\caption{Confusion matrices on the test set.}
+\label{fig:cm_test}
+\end{figure}
+
+\subsection{Evaluation and Model Choice}
+
+We computed accuracy, precision, recall, and F1-score for all models, and plotted One-vs-Rest ROC curves with per-class AUC.
+
+\textbf{Improvement via validation:} Validation curves guided hyperparameter selection. GridSearchCV was applied to each model:
+\begin{itemize}
+\item DT: tuned max\_depth, min\_samples\_split, min\_samples\_leaf
+\item LR: tuned C and solver
+\item SVM: tuned C and gamma
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../data/plots/05_roc_curves.png}
+\caption{ROC curves (One-vs-Rest) for all baseline models.}
+\label{fig:roc}
+\end{figure}
+
+The tuned models showed measurable improvement, particularly for Decision Tree where reduced max\_depth significantly decreased overfitting. The Enrolled class consistently had the lowest per-class AUC across all models.
+
+% ====================
+\section{Open-ended Exploration}
+
+\subsection{Ensemble Methods}
+
+We introduced Random Forest and Gradient Boosting classifiers. After GridSearchCV tuning, both ensemble methods outperformed the individual baseline models.
+
+\subsection{Cross-Validation Comparison}
+
+A unified 5-fold cross-validation comparison across all five model classes revealed the relative strengths of each approach, with ensemble methods achieving higher and more stable F1-scores.
+
+\subsection{Feature Importance Analysis}
+
+Feature importance scores from the best tree-based ensemble (Figure~\ref{fig:feature_importance}) confirm that academic performance metrics---approval rates and grade scores from both semesters---are the dominant predictive signals. Performance plateaus around 30--40 features, confirming that the top academic performance metrics are sufficient for strong classification.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../data/plots/06_feature_importance.png}
+\caption{Top feature importances from the ensemble model.}
+\label{fig:feature_importance}
+\end{figure}
+
+% ====================
+\section{Conclusion}
+
+Our analysis demonstrates that: (1) academic performance indicators (approval rates, grades) are the strongest predictors of student outcomes; (2) the ``Enrolled'' class is inherently ambiguous and represents the primary classification challenge; (3) hyperparameter tuning via validation curves effectively reduces overfitting, especially for Decision Trees; (4) ensemble methods provide the best overall performance.
+
+% ====================
+\section{References}
+
+\begin{enumerate}
+\item Realinho, V., et al. (2022). Student Dropout and Academic Success. UCI Machine Learning Repository. \url{https://doi.org/10.24432/C5MC89}
+\item Pedregosa, F., et al. (2011). Scikit-learn: Machine Learning in Python. JMLR, 12, pp. 2825--2830.
+\item Van der Maaten, L. and Hinton, G. (2008). Visualizing Data using t-SNE. JMLR, 9, pp. 2579--2605.
+\end{enumerate}
+
+% ====================
+\section{Credit}
+
+[TODO: List contribution of each group member]
+
+[TODO: GenAI tools disclosure --- e.g., ``Used Claude by Anthropic for code debugging and report drafting assistance. Core ML implementations are original work.'']
+
+\end{document}
