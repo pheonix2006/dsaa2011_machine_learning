@@ -23,6 +23,19 @@ docs/
 !README.md
 !project_announce_L01.md
 
+# LaTeX auxiliary files
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.blg
+
 # OS files
 .DS_Store
 Thumbs.db
@@ -30,6 +43,8 @@ Thumbs.db
 # IDE files
 .vscode/
 .idea/
+.claude/
+.pytest_cache/
 
 # Environment
 .env
