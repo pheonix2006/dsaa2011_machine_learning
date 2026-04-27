@@ -42,7 +42,7 @@ def plot_roc_curves(
     X_test: np.ndarray,
     y_test: np.ndarray,
     save_path: Optional[str] = None,
-) -> plt.Figure:
+) -> tuple[plt.Figure, dict[str, dict[str, float]]]:
     """Plot One-vs-Rest ROC curves for multiple models (3-class)."""
     y_bin = label_binarize(y_test, classes=CLASSES)
     n_classes = y_bin.shape[1]
@@ -53,6 +53,7 @@ def plot_roc_curves(
     if n_models == 1:
         axes = [axes]
 
+    auc_dict = {}
     for ax, (model_name, model) in zip(axes, models_dict.items()):
         if hasattr(model, "predict_proba"):
             y_score = model.predict_proba(X_test)
@@ -63,10 +64,12 @@ def plot_roc_curves(
             continue
 
         auc_values = []
+        model_aucs = {}
         for i in range(n_classes):
             fpr, tpr, _ = roc_curve(y_bin[:, i], y_score[:, i])
             roc_auc = auc(fpr, tpr)
             auc_values.append(roc_auc)
+            model_aucs[CLASS_NAMES[i]] = roc_auc
             ax.plot(fpr, tpr, color=colors_per_class[i], lw=2,
                     label=f"{CLASS_NAMES[i]} (AUC={roc_auc:.3f})")
 
@@ -74,6 +77,8 @@ def plot_roc_curves(
         ax.set_xlabel("False Positive Rate")
         ax.set_ylabel("True Positive Rate")
         macro_auc = np.mean(auc_values)
+        model_aucs["macro"] = float(macro_auc)
+        auc_dict[model_name] = model_aucs
         ax.set_title(f"{model_name}\n(Macro AUC={macro_auc:.3f})", fontweight="bold")
         ax.legend(loc="lower right")
         ax.grid(True, alpha=0.3)
@@ -86,7 +91,7 @@ def plot_roc_curves(
         plt.savefig(save_path, dpi=150, bbox_inches="tight")
         print(f"Plot saved to {save_path}")
 
-    return fig
+    return fig, auc_dict
 
 
 def cross_validate_model(

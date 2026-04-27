@@ -61,16 +61,20 @@ def apply_dbscan(X: np.ndarray, eps: float = 0.5, min_samples: int = 5):
 # Cluster Evaluation Metrics
 
 def evaluate_clustering(X: np.ndarray, labels: np.ndarray, y_true: Optional[np.ndarray] = None):
-    """Evaluate clustering quality with multiple metrics 
+    """Evaluate clustering quality with multiple metrics
     including silhouette, calinski_harabasz, davies_bouldin, adjusted_rand_index, normalized_mutual_info.
     """
     # Filter out noise points (DBSCAN label = -1)
     mask = labels >= 0
+    n_total = len(labels)
+    n_noise = int(np.sum(~mask))
+    noise_ratio = n_noise / n_total if n_total > 0 else 0.0
+
     n_clusters = len(set(labels[mask]))
 
     if n_clusters < 2:
         print(f"Warning: Only {n_clusters} cluster(s) found.")
-        return {}
+        return {"noise_ratio": noise_ratio}
 
     X_valid = X[mask]
     labels_valid = labels[mask]
@@ -80,6 +84,7 @@ def evaluate_clustering(X: np.ndarray, labels: np.ndarray, y_true: Optional[np.n
         "silhouette_std": silhouette_samples(X_valid, labels_valid).std(),
         "calinski_harabasz": calinski_harabasz_score(X_valid, labels_valid),
         "davies_bouldin": davies_bouldin_score(X_valid, labels_valid),
+        "noise_ratio": noise_ratio,
     }
 
     if y_true is not None:
@@ -348,15 +353,39 @@ def rank_algorithms(all_results: dict[str, dict[str, float]]) -> list[tuple[str,
 
     Metrics are min-max normalized to [0,1], DB Index inverted (lower=better),
     then summed with equal weights.
+
+    Noise penalty rules:
+    - noise_ratio > 0.5: algorithm excluded from ranking (appended at end with score 0.0)
+    - 0 < noise_ratio <= 0.5: final score scaled by (1 - noise_ratio)
     """
     metrics_keys = ["silhouette", "calinski_harabasz", "davies_bouldin",
                     "adjusted_rand_index", "normalized_mutual_info"]
-    present_keys = [k for k in metrics_keys
-                    if all(k in v for v in all_results.values())]
-    if not present_keys:
+
+    # Separate algorithms with excessive noise (>50%) from valid ones
+    excluded = []
+    valid_names = []
+    for name, res in all_results.items():
+        nr = res.get("noise_ratio", 0.0)
+        if nr > 0.5:
+            print(f"Excluding '{name}' from ranking: noise_ratio={nr:.3f} > 0.5")
+            excluded.append(name)
+        else:
+            valid_names.append(name)
+
+    # If all algorithms are excluded, return all with score 0.0
+    if not valid_names:
         return [(name, 0.0) for name in all_results]
 
-    raw = {name: {k: res[k] for k in present_keys} for name, res in all_results.items()}
+    valid_results = {name: all_results[name] for name in valid_names}
+
+    present_keys = [k for k in metrics_keys
+                    if all(k in v for v in valid_results.values())]
+    if not present_keys:
+        ranked = [(name, 0.0) for name in valid_names]
+        ranked += [(name, 0.0) for name in excluded]
+        return ranked
+
+    raw = {name: {k: res[k] for k in present_keys} for name, res in valid_results.items()}
 
     normalized: dict[str, dict[str, float]] = {name: {} for name in raw}
     for key in present_keys:
@@ -369,6 +398,14 @@ def rank_algorithms(all_results: dict[str, dict[str, float]]) -> list[tuple[str,
                 norm_val = 1.0 - norm_val
             normalized[name][key] = norm_val
 
-    scores = {name: sum(normalized[name].values()) for name in normalized}
+    scores: dict[str, float] = {}
+    for name in normalized:
+        base_score = sum(normalized[name].values())
+        nr = all_results[name].get("noise_ratio", 0.0)
+        if nr > 0.0:
+            base_score = base_score * (1.0 - nr)
+        scores[name] = base_score
+
     ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+    ranked += [(name, 0.0) for name in excluded]
     return ranked

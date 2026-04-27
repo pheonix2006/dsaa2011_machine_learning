@@ -127,6 +127,37 @@ def add_all_engineered_features(df: pd.DataFrame):
     return df
 
 
+
+# Polynomial Feature Interactions
+
+def add_polynomial_interactions(
+    X: pd.DataFrame,
+    feature_names: list[str],
+    degree: int = 2,
+) -> pd.DataFrame:
+    """Generate pairwise interaction terms for selected features.
+
+    Only degree=2 pairwise products are created (not full polynomial expansion)
+    to keep dimensionality manageable.
+    """
+    X = X.copy()
+    valid_features = [f for f in feature_names if f in X.columns]
+
+    new_cols = {}
+    for i in range(len(valid_features)):
+        for j in range(i + 1, len(valid_features)):
+            f1, f2 = valid_features[i], valid_features[j]
+            col_name = f"{f1}_x_{f2}"
+            new_cols[col_name] = X[f1].values * X[f2].values
+
+    if new_cols:
+        interaction_df = pd.DataFrame(new_cols, index=X.index)
+        X = pd.concat([X, interaction_df], axis=1)
+        print(f"Added {len(new_cols)} interaction features from {len(valid_features)} base features")
+
+    return X
+
+
 # Target Encoding
 
 def target_encode_column(train_series: pd.Series, test_series: pd.Series, y_train: pd.Series, smoothing: float = 10.0):
