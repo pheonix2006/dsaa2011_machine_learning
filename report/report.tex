@@ -233,15 +233,16 @@ The per-class AUC values confirm that all models perform well on the majority cl
 
 \begin{table}[H]
 \centering
-\caption{Baseline vs.\ tuned model performance on test set.}
+\small
+\caption{Baseline vs.\ tuned model performance on test set (F1 macro).}
 \label{tab:tuning}
-\begin{tabular}{lccc}
+\begin{tabular}{@{}lccc@{}}
 \toprule
-Model & Baseline F1 & Tuned F1 & Improvement \\
+Model & Base & Tuned & $\Delta$ \\
 \midrule
-Decision Tree & 0.6509 & 0.6501 & $-$0.0008 \\
-Logistic Regression & 0.7000 & 0.7099 & +0.0099 \\
-SVM (RBF) & 0.6367 & 0.6893 & +0.0526 \\
+Decision Tree & 0.651 & 0.650 & $-$0.001 \\
+Logistic Reg. & 0.700 & 0.710 & +0.010 \\
+SVM (RBF) & 0.637 & 0.689 & +0.053 \\
 \bottomrule
 \end{tabular}
 \end{table}
