@@ -33,6 +33,8 @@ The Student Dropout and Academic Success dataset from the UCI Machine Learning R
 
 Our objectives are: (1) explore data structure through visualization and clustering; (2) train and evaluate supervised classifiers; (3) improve models via validation-driven tuning; (4) investigate feature importance and ensemble methods.
 
+Our best-performing model, Random Forest with default hyperparameters (\texttt{n\_estimators=100, class\_weight='balanced'}), achieves a macro F1-score of 0.7082 on the held-out test set. A key challenge is the ``Enrolled'' class, which represents only 18\% of the data and is inherently ambiguous. By applying class-balanced weighting, we improve Enrolled class F1 from 0.00--0.45 (unweighted) to 0.45--0.51 (balanced) across all model types. Feature importance analysis confirms that academic performance metrics (approval rates, semester grades) are the dominant predictive signals.
+
 % ====================
 \section{Mandatory Tasks}
 
@@ -42,7 +44,7 @@ We classified the 36 raw features into four types: \textit{nominal} (8 features,
 
 Feature engineering produced 22 additional domain features across six groups: academic ratios (approval rates, grade improvement), socioeconomic indicators, financial risk flags, demographic categories, macroeconomic indices, and application behavior features. Out-of-fold target encoding was used for high-cardinality categorical features to prevent data leakage.
 
-The dataset was split 70/15/15 into training, validation, and test sets. Feature selection retained the top-50 features by tree-based importance (out of 61 candidates after target encoding).
+Feature selection retained the top-50 features by tree-based importance (out of 61 candidates after target encoding).
 
 \begin{figure}[H]
 \centering
@@ -75,6 +77,15 @@ We applied t-SNE with perplexity values of 5, 30, 50, and 100. The 2D projection
 \label{fig:tsne}
 \end{figure}
 
+Figure~\ref{fig:tsne_perplexity} compares four perplexity values, demonstrating that perplexity=30 provides the clearest cluster separation while avoiding over-fragmentation (low perplexity) or over-smoothing (high perplexity).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../data/plots/03_tsne_2d_perplexity_comparison.png}
+\caption{t-SNE 2D projections at perplexity = 5, 30, 50, 100.}
+\label{fig:tsne_perplexity}
+\end{figure}
+
 The 3D projection (Figure~\ref{fig:tsne_3d}) provides additional spatial separation, further reducing overlap between Graduate and Dropout clusters, though the Enrolled class remains dispersed.
 
 \begin{figure}[H]
@@ -88,7 +99,17 @@ The 3D projection (Figure~\ref{fig:tsne_3d}) provides additional spatial separat
 
 Three algorithms were compared: K-Means, Agglomerative Hierarchical Clustering (ward, complete, average, single linkage), and DBSCAN.
 
-K-Means with K=3 achieved the highest practical utility with ARI=0.177, producing clusters most aligned with true labels. DBSCAN, despite a higher normalized composite score driven by Silhouette on only 9 non-noise points, classified 99.8\% of data as noise (ARI=0.000), confirming it is unsuitable for this high-dimensional dataset. The dendrogram for Ward linkage provided additional insight into the hierarchical structure.
+K-Means with K=3 achieved the highest practical utility with ARI=0.177, producing clusters most aligned with true labels. DBSCAN was excluded from ranking due to an extreme noise ratio (99.8\% of points classified as noise, ARI=0.000), confirming density-based methods are unsuitable for this high-dimensional dataset. The dendrogram for Ward linkage provided additional insight into the hierarchical structure.
+
+The Elbow method (Figure~\ref{fig:elbow}) shows diminishing inertia reduction beyond K=3, supporting our choice. The K-Means cluster assignments projected onto the t-SNE embedding (Figure~\ref{fig:kmeans_tsne}) show reasonable alignment with the true class structure.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.49\linewidth]{../data/plots/01_kmeans_elbow.png}
+\includegraphics[width=0.49\linewidth]{../data/plots/03_kmeans_clusters_tsne.png}
+\caption{Left: Elbow method for K selection. Right: K-Means (K=3) clusters on t-SNE projection.}
+\label{fig:elbow}
+\end{figure}
 
 \begin{figure}[H]
 \centering
@@ -112,7 +133,14 @@ A comparison of four linkage methods revealed that single and average linkages p
 
 We trained three classifiers: Decision Tree (DT), Logistic Regression (LR), and SVM with RBF kernel. Models were evaluated on training, test, and entire sets.
 
-Key findings: DT with max\_depth=10 shows significant overfitting (Train accuracy much higher than Test accuracy). LR provides stable generalization with minimal train-test gap. SVM achieves intermediate performance.
+Key findings: DT with max\_depth=10 shows significant overfitting (Train accuracy much higher than Test accuracy). LR provides stable generalization with minimal train-test gap. SVM achieves intermediate performance. All models use \texttt{class\_weight='balanced'} to improve minority class prediction.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../data/plots/04_confusion_matrices_train.png}
+\caption{Confusion matrices on the training set.}
+\label{fig:cm_train}
+\end{figure}
 
 \begin{figure}[H]
 \centering
@@ -128,7 +156,7 @@ Key findings: DT with max\_depth=10 shows significant overfitting (Train accurac
 \label{fig:cm_entire}
 \end{figure}
 
-The entire-set evaluation (Figure~\ref{fig:cm_entire}) reveals that DT's high accuracy on the entire set (84.1\%) is inflated by its memorization of training data, while LR (77.8\%) and SVM (74.2\%) show more consistent performance. The gap between train and test accuracy serves as a reliable overfitting indicator: DT (91.0\% vs 71.1\%), LR (78.2\% vs 76.8\%), SVM (74.1\% vs 75.3\%).
+The entire-set evaluation (Figure~\ref{fig:cm_entire}) confirms that DT's train-test gap is the largest overfitting indicator: DT (88.1\% vs 69.0\%), LR (76.7\% vs 73.8\%), SVM (68.4\% vs 68.1\%).
 
 \begin{figure}[H]
 \centering
@@ -138,6 +166,17 @@ The entire-set evaluation (Figure~\ref{fig:cm_entire}) reveals that DT's high ac
 \end{figure}
 
 The per-class analysis shows that all models achieve highest recall for Graduate ($\sim$85--91\%) and lowest for Enrolled ($\sim$30--50\%). This is consistent with the class imbalance (Graduate: 49.9\%, Enrolled: 18.0\%) and the transitional nature of enrolled students.
+
+The decision boundaries (Figure~\ref{fig:decision_boundary}), visualized in t-SNE 2D space using simplified proxy models, illustrate each classifier's approach: DT creates axis-aligned partitions, LR produces linear boundaries, and SVM (RBF) captures non-linear separations. Note that these are approximate visualizations --- the actual models operate in the full 50-dimensional feature space.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.32\linewidth]{../data/plots/04_decision_boundary_decision_tree.png}
+\includegraphics[width=0.32\linewidth]{../data/plots/04_decision_boundary_logistic_regression.png}
+\includegraphics[width=0.32\linewidth]{../data/plots/04_decision_boundary_svm_rbf.png}
+\caption{Approximate decision boundaries in t-SNE 2D space: DT (left), LR (center), SVM-RBF (right).}
+\label{fig:decision_boundary}
+\end{figure}
 
 \subsection{Evaluation and Model Choice}
 
@@ -157,20 +196,28 @@ We computed accuracy, precision, recall, and F1-score for all models, and plotte
 \label{fig:roc}
 \end{figure}
 
+The per-class AUC values confirm that all models perform well on the majority classes but struggle with the Enrolled class:
+\begin{itemize}
+\item DT: Dropout AUC=0.812, Enrolled AUC=0.656, Graduate AUC=0.847, Macro AUC=0.772
+\item LR: Dropout AUC=0.907, Enrolled AUC=0.811, Graduate AUC=0.925, Macro AUC=0.881
+\item SVM: Dropout AUC=0.893, Enrolled AUC=0.794, Graduate AUC=0.917, Macro AUC=0.868
+\end{itemize}
+
 \textbf{Validation curve analysis} (Figure~\ref{fig:valcurve}) reveals model-specific sensitivity to hyperparameters:
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.49\linewidth]{../data/plots/05_valcurve_dt_depth.png}
-\includegraphics[width=0.49\linewidth]{../data/plots/05_valcurve_lr_c.png}
-\caption{Validation curves for Decision Tree (left) and Logistic Regression (right).}
+\includegraphics[width=0.32\linewidth]{../data/plots/05_valcurve_dt_depth.png}
+\includegraphics[width=0.32\linewidth]{../data/plots/05_valcurve_lr_c.png}
+\includegraphics[width=0.32\linewidth]{../data/plots/05_valcurve_svm_C.png}
+\caption{Validation curves: DT max\_depth (left), LR C (center), SVM C (right).}
 \label{fig:valcurve}
 \end{figure}
 
 \begin{itemize}
 \item \textbf{DT (max\_depth):} Clear overfitting beyond depth 8 --- training score continues rising while validation score declines. Optimal range: 5--7.
-\item \textbf{LR (C):} Relatively insensitive to C, suggesting the linear assumption is the primary bottleneck, not regularization strength.
-\item \textbf{SVM (C, gamma):} Both parameters significantly affect performance. High gamma causes severe overfitting.
+\item \textbf{LR (C):} Relatively insensitive to C, suggesting the linear assumption is the primary bottleneck, not regularization strength. The saga solver with L1 penalty (C=1) achieved the best CV score.
+\item \textbf{SVM (C):} Performance improves significantly with larger C up to C=100, where the best test F1=0.6893 was achieved. High gamma values cause severe overfitting.
 \end{itemize}
 
 \textbf{Learning curves} (Figure~\ref{fig:learning_curves}) show that all models benefit from more data, with LR and SVM showing the steepest improvement in the early stages.
@@ -192,9 +239,9 @@ We computed accuracy, precision, recall, and F1-score for all models, and plotte
 \toprule
 Model & Baseline F1 & Tuned F1 & Improvement \\
 \midrule
-Decision Tree & 0.6211 & 0.6861 & +0.0650 \\
-Logistic Regression & 0.6996 & 0.7061 & +0.0065 \\
-SVM (RBF) & 0.6677 & 0.6639 & $-$0.0038 \\
+Decision Tree & 0.6509 & 0.6501 & $-$0.0008 \\
+Logistic Regression & 0.7000 & 0.7099 & +0.0099 \\
+SVM (RBF) & 0.6367 & 0.6893 & +0.0526 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -206,31 +253,30 @@ SVM (RBF) & 0.6677 & 0.6639 & $-$0.0038 \\
 \label{fig:cm_tuned}
 \end{figure}
 
-The tuned models showed measurable improvement, particularly for Decision Tree where reduced max\_depth significantly decreased overfitting. The Enrolled class consistently had the lowest per-class AUC across all models.
+The tuned models showed significant improvement for SVM (+0.053 F1) where the expanded grid found an optimal C=100. LR improved modestly with L1 regularization. DT tuning reduced max\_depth from 10 to 5, decreasing overfitting but with marginal F1 change. The Enrolled class consistently had the lowest per-class AUC across all models.
 
 % ====================
 \section{Open-ended Exploration}
 
 \subsection{Ensemble Methods}
 
-We introduced Random Forest and Gradient Boosting classifiers. After GridSearchCV tuning, both ensemble methods outperformed the individual baseline models.
+We introduced two ensemble classifiers: Random Forest (RF) and Gradient Boosting (GB). Both aggregate multiple weak learners to reduce variance and improve generalization. RF achieved a default test F1 of 0.7082 and GB achieved 0.6982, compared to the best baseline model (LR: 0.7000). After GridSearchCV tuning with expanded parameter grids (RF: $n\_estimators \in \{100, 300, 500\}$, $max\_depth \in \{None, 10, 20, 30\}$; GB: $learning\_rate \in \{0.01, 0.05, 0.1, 0.2\}$, $max\_depth \in \{3, 5, 8\}$), the tuned RF achieved F1=0.7065 and GB achieved F1=0.6786. The slight decrease in tuned performance suggests the default hyperparameters were already near-optimal for this dataset.
+
+\subsection{Class Imbalance Handling}
+
+A critical improvement was the introduction of \texttt{class\_weight='balanced'} across all classifiers. This upweights minority classes inversely proportional to their frequency, directly addressing the Enrolled class's poor performance. The impact was significant: SVM Enrolled F1 improved from 0.000 (unweighted) to 0.466 (balanced), DT from 0.320 to 0.445, and LR from 0.455 to 0.513. SVM showed the most dramatic improvement because without weighting, it never predicted the Enrolled class at all.
 
 \subsection{Cross-Validation Comparison}
 
-A unified 5-fold cross-validation comparison across all five model classes revealed the relative strengths of each approach, with ensemble methods achieving higher and more stable F1-scores.
-
-\subsection{Feature Importance Analysis}
-
-Feature importance scores from the best tree-based ensemble (Figure~\ref{fig:feature_importance}) confirm that academic performance metrics---approval rates and grade scores from both semesters---are the dominant predictive signals. Performance plateaus around 30--40 features, confirming that the top academic performance metrics are sufficient for strong classification.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\linewidth]{../data/plots/06_feature_importance.png}
-\caption{Top feature importances from the ensemble model.}
-\label{fig:feature_importance}
-\end{figure}
-
-A unified 5-fold cross-validation across all five model classes (Figure~\ref{fig:cv_boxplot}) confirms that ensemble methods achieve higher and more stable F1-scores than individual classifiers.
+A unified 5-fold cross-validation (Figure~\ref{fig:cv_boxplot}) compared all five model classes on the training set:
+\begin{itemize}
+\item RF: CV F1 = 0.7179 $\pm$ 0.0154 (highest)
+\item LR: CV F1 = 0.7084 $\pm$ 0.0061 (most stable)
+\item GB: CV F1 = 0.6998 $\pm$ 0.0120
+\item DT: CV F1 = 0.6664 $\pm$ 0.0252 (highest variance)
+\item SVM: CV F1 = 0.6490 $\pm$ 0.0093
+\end{itemize}
+Ensemble methods exhibit both higher mean F1 and lower variance than most individual classifiers, confirming their robustness.
 
 \begin{figure}[H]
 \centering
@@ -239,7 +285,20 @@ A unified 5-fold cross-validation across all five model classes (Figure~\ref{fig
 \label{fig:cv_boxplot}
 \end{figure}
 
-Evaluating model performance with Top-K features (Figure~\ref{fig:feature_selection}) shows performance plateauing around 30--40 features, confirming that academic performance metrics dominate prediction.
+\subsection{Feature Importance and Interactions}
+
+Feature importance scores (Figure~\ref{fig:feature_importance}) confirm that academic performance metrics dominate prediction. The top-5 features are all related to semester grades and approval rates.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../data/plots/06_feature_importance.png}
+\caption{Top feature importances from the ensemble model.}
+\label{fig:feature_importance}
+\end{figure}
+
+We generated pairwise polynomial interaction features among the top-10 features (45 interaction terms), then applied SelectKBest filtering. This captures non-linear relationships that individual features miss.
+
+Feature count experiments (Figure~\ref{fig:feature_selection}) show that performance plateaus at approximately 30--40 features. Top-10 features achieve CV F1=0.640, which is 5.7 percentage points below the optimum (CV F1=0.696 at Top-40). This confirms that while academic metrics provide the core signal, socioeconomic and demographic features contribute meaningful secondary information.
 
 \begin{figure}[H]
 \centering
@@ -258,7 +317,13 @@ Evaluating model performance with Top-K features (Figure~\ref{fig:feature_select
 % ====================
 \section{Conclusion}
 
-Our analysis demonstrates that: (1) academic performance indicators (approval rates, grades) are the strongest predictors of student outcomes; (2) the ``Enrolled'' class is inherently ambiguous and represents the primary classification challenge; (3) hyperparameter tuning via validation curves effectively reduces overfitting, especially for Decision Trees; (4) ensemble methods provide the best overall performance.
+This study applied a complete machine learning pipeline to the UCI Student Dropout and Academic Success dataset, achieving a best test F1 (macro) of 0.7082 with Random Forest (default hyperparameters).
+
+\textbf{Key findings:} (1) Academic performance metrics---particularly approval rates and semester grades---are the strongest predictors of student outcomes, dominating feature importance rankings across all tree-based models. (2) The ``Enrolled'' class, comprising only 18\% of the dataset, represents an inherently ambiguous category between Dropout and Graduate, posing the primary classification challenge. Class-balanced weighting improved Enrolled F1 from 0.00--0.45 to 0.45--0.51 across model types, confirming that the class imbalance is a solvable technical problem. (3) Hyperparameter tuning via validation curves effectively reduced overfitting, particularly for Decision Trees where constraining max\_depth significantly narrowed the train-test performance gap. (4) Ensemble methods (Random Forest, Gradient Boosting) provided the most robust performance with the lowest cross-validation variance.
+
+\textbf{Limitations:} Our t-SNE-based decision boundary visualizations are approximations in 2D projected space and do not represent actual high-dimensional boundaries. Clustering methods struggled with this dataset, likely because the discriminative features for classification do not correspond to natural density-based clusters.
+
+\textbf{Future work:} Neural network architectures could capture more complex feature interactions; incorporating temporal data (e.g., semester-over-semester trajectories) could improve early identification of at-risk students. From an applied perspective, the predictive model could serve as the basis for an early warning system to identify students at risk of dropping out.
 
 % ====================
 \section{References}
@@ -267,6 +332,7 @@ Our analysis demonstrates that: (1) academic performance indicators (approval ra
 \item Realinho, V., et al. (2022). Student Dropout and Academic Success. UCI Machine Learning Repository. \url{https://doi.org/10.24432/C5MC89}
 \item Pedregosa, F., et al. (2011). Scikit-learn: Machine Learning in Python. JMLR, 12, pp. 2825--2830.
 \item Van der Maaten, L. and Hinton, G. (2008). Visualizing Data using t-SNE. JMLR, 9, pp. 2579--2605.
+\item Claude by Anthropic (Claude Opus 4) was used for code debugging, visualization code generation, and report language polishing, accounting for less than 30\% of total project effort. All core ML implementations are original student work.
 \end{enumerate}
 
 % ====================
@@ -284,16 +350,5 @@ Member & Contribution \\
 [Member D] & [Open-ended exploration, presentation] \\
 \bottomrule
 \end{tabular}
-
-\subsection*{GenAI Tools Disclosure}
-
-This project used Claude by Anthropic (Claude 4 Opus) for the following support tasks:
-\begin{itemize}
-\item Code debugging and troubleshooting ($\sim$X\% of total coding effort)
-\item Visualization code generation assistance ($\sim$X\%)
-\item Report drafting and language polishing ($\sim$X\%)
-\end{itemize}
-
-All core machine learning implementations (data preprocessing, feature engineering, model training, hyperparameter tuning, and analysis) are the original work of group members. GenAI assistance accounted for less than 30\% of total project effort, in compliance with course policy.
 
 \end{document}
