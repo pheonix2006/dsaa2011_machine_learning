@@ -1,15 +1,22 @@
-\documentclass[10pt,twocolumn]{article}
-\usepackage[margin=2.5cm]{geometry}
+\documentclass{article}
+
+% Use preprint option for course project submission
+\usepackage[preprint]{neurips_2025}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{booktabs}
-\usepackage{hyperref}
 \usepackage{float}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage{url}
+\usepackage{xcolor}
 
 \title{Student Dropout Prediction: A Machine Learning Analysis\\
 \large DSAA2011 (L01) Course Project --- HKUST(GZ) 2026 Spring}
+
 \author{
   [GroupID] \quad
   Member A (XX\%) \quad
@@ -17,7 +24,6 @@
   Member C (XX\%) \quad
   Member D (XX\%)
 }
-\date{\today}
 
 \begin{document}
 \maketitle
@@ -42,7 +48,7 @@ Our best-performing model, Random Forest with default hyperparameters (\texttt{n
 
 We classified the 36 raw features into four types: \textit{nominal} (8 features, one-hot encoded), \textit{binary} (8 features, kept as 0/1), \textit{continuous} (7 features), and \textit{count} (13 features). StandardScaler was applied only to continuous and count features to avoid distorting binary indicators.
 
-Feature engineering produced 22 additional domain features across six groups: academic ratios (approval rates, grade improvement), socioeconomic indicators, financial risk flags, demographic categories, macroeconomic indices, and application behavior features. Out-of-fold target encoding was used for high-cardinality categorical features to prevent data leakage.
+Feature engineering produced 25 additional domain features across six groups: academic ratios (approval rates, grade improvement), socioeconomic indicators, financial risk flags, demographic categories, macroeconomic indices, and application behavior features. Out-of-fold target encoding was used for high-cardinality categorical features to prevent data leakage.
 
 Feature selection retained the top-50 features by tree-based importance (out of 61 candidates after target encoding).
 
@@ -64,7 +70,7 @@ Feature selection retained the top-50 features by tree-based importance (out of 
 \label{fig:eda_correlation}
 \end{figure}
 
-The data was split 70/15/15 into training (2,875), validation (664), and test (885) sets with stratified sampling to preserve class proportions.
+The data was split 70/15/15 into training (3096), validation (664), and test (664) sets with stratified sampling to preserve class proportions.
 
 \subsection{Data Visualization (t-SNE)}
 
@@ -327,29 +333,40 @@ This study applied a complete machine learning pipeline to the UCI Student Dropo
 \textbf{Future work:} Neural network architectures could capture more complex feature interactions; incorporating temporal data (e.g., semester-over-semester trajectories) could improve early identification of at-risk students. From an applied perspective, the predictive model could serve as the basis for an early warning system to identify students at risk of dropping out.
 
 % ====================
-\section{References}
+\section*{References}
 
-\begin{enumerate}
-\item Realinho, V., et al. (2022). Student Dropout and Academic Success. UCI Machine Learning Repository. \url{https://doi.org/10.24432/C5MC89}
-\item Pedregosa, F., et al. (2011). Scikit-learn: Machine Learning in Python. JMLR, 12, pp. 2825--2830.
-\item Van der Maaten, L. and Hinton, G. (2008). Visualizing Data using t-SNE. JMLR, 9, pp. 2579--2605.
-\item Claude by Anthropic (Claude Opus 4) was used for code debugging, visualization code generation, and report language polishing, accounting for less than 30\% of total project effort. All core ML implementations are original student work.
-\end{enumerate}
+\medskip
+
+{
+\small
+
+[1] Realinho, V., et al.\ (2022). Student Dropout and Academic Success. UCI Machine Learning Repository. \url{https://doi.org/10.24432/C5MC89}
+
+[2] Pedregosa, F., et al.\ (2011). Scikit-learn: Machine Learning in Python. JMLR, 12, pp.\ 2825--2830.
+
+[3] Van der Maaten, L.\ and Hinton, G.\ (2008). Visualizing Data using t-SNE. JMLR, 9, pp.\ 2579--2605.
+
+[4] Claude by Anthropic (Claude Opus 4) was used for code debugging, visualization code generation, and report language polishing, accounting for less than 30\% of total project effort. All core ML implementations are original student work.
+}
 
 % ====================
-\section{Credit}
+\section*{Credit}
 
 \subsection*{Group Member Contributions}
+
+{
+\small
 
 \begin{tabular}{ll}
 \toprule
 Member & Contribution \\
 \midrule
-[Member A] & [Data preprocessing, feature engineering] \\
-[Member B] & [Clustering analysis, t-SNE visualization] \\
-[Member C] & [Model training, evaluation, report writing] \\
-[Member D] & [Open-ended exploration, presentation] \\
+{[Member A]} & [Data preprocessing, feature engineering] \\
+{[Member B]} & [Clustering analysis, t-SNE visualization] \\
+{[Member C]} & [Model training, evaluation, report writing] \\
+{[Member D]} & [Open-ended exploration, presentation] \\
 \bottomrule
 \end{tabular}
+}
 
 \end{document}
