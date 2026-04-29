@@ -46,12 +46,11 @@ Our best-performing model, Random Forest with default hyperparameters (\texttt{n
 
 \subsection{Data Preprocessing}
 
-We classified the 36 raw features into four types: \textit{nominal} (8 features, one-hot encoded), \textit{binary} (8 features, kept as 0/1), \textit{continuous} (7 features), and \textit{count} (13 features). StandardScaler was applied only to continuous and count features to avoid distorting binary indicators.
+We classified the 36 raw features into four types: \textit{nominal} (8 features, one-hot encoded), \textit{binary} (8 features, kept as 0 / 1), \textit{continuous} (7 features), and \textit{count} (13 features). 
 
 Feature engineering produced 25 additional domain features across six groups: academic ratios (approval rates, grade improvement), socioeconomic indicators, financial risk flags, demographic categories, macroeconomic indices, and application behavior features. Out-of-fold target encoding was used for high-cardinality categorical features to prevent data leakage.
 
-Feature selection retained the top-50 features by tree-based importance (out of 61 candidates after target encoding).
-
+StandardScaler was applied to all 45 numerical features (the 20 original continuous and count features with the 25 newly engineered domain features) to ensure uniform scale without distorting binary indicators. Feature selection retained the top-50 features by tree-based importance out of 61 candidates after target encoding.
 \begin{figure}[H]
 \centering
 \includegraphics[width=\linewidth]{../data/plots/01_eda_boxplots.png}
@@ -65,7 +64,7 @@ Feature selection retained the top-50 features by tree-based importance (out of 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\linewidth]{../data/plots/01_eda_correlation_heatmap.png}
+\includegraphics[width=0.65\linewidth]{../data/plots/01_eda_correlation_heatmap.png}
 \caption{Top-20 feature correlations with the target variable.}
 \label{fig:eda_correlation}
 \end{figure}
@@ -74,66 +73,81 @@ The data was split 70/15/15 into training (3096), validation (664), and test (66
 
 \subsection{Data Visualization (t-SNE)}
 
-We applied t-SNE with perplexity values of 5, 30, 50, and 100. The 2D projection at perplexity=30 (Figure~\ref{fig:tsne}) reveals that Graduate students form a relatively compact region, while Dropout students cluster separately. Enrolled students are scattered between both groups, consistent with their transitional academic status.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\linewidth]{../data/plots/04_tsne_2d_best.png}
-\caption{t-SNE 2D projection (perplexity=30) colored by class.}
-\label{fig:tsne}
-\end{figure}
+We applied t-SNE with perplexity values of 5, 30, 50, and 100. The 2D projection at perplexity=30 (Figure~\ref{fig:tsne_combined}) reveals that Graduate students form a relatively compact region, while Dropout students cluster separately. Enrolled students are scattered between both groups, consistent with their transitional academic status.
 
 Figure~\ref{fig:tsne_perplexity} compares four perplexity values, demonstrating that perplexity=30 provides the clearest cluster separation while avoiding over-fragmentation (low perplexity) or over-smoothing (high perplexity).
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\linewidth]{../data/plots/03_tsne_2d_perplexity_comparison.png}
+\includegraphics[width=0.8\linewidth]{../data/plots/03_tsne_2d_perplexity_comparison.png}
 \caption{t-SNE 2D projections at perplexity = 5, 30, 50, 100.}
 \label{fig:tsne_perplexity}
 \end{figure}
 
-The 3D projection (Figure~\ref{fig:tsne_3d}) provides additional spatial separation, further reducing overlap between Graduate and Dropout clusters, though the Enrolled class remains dispersed.
+The 3D projection (Figure~\ref{fig:tsne_combined}) provides additional spatial separation, further reducing overlap between Graduate and Dropout clusters, though the Enrolled class remains dispersed.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\linewidth]{../data/plots/05_tsne_3d_best.png}
-\caption{t-SNE 3D projection (perplexity=30) colored by class.}
-\label{fig:tsne_3d}
+\includegraphics[width=0.49\linewidth]{../data/plots/04_tsne_2d_best.png}
+\includegraphics[width=0.49\linewidth]{../data/plots/05_tsne_3d_best.png}
+\caption{Left: t-SNE 2D projection (perplexity=30) colored by class. Right: t-SNE 3D projection (perplexity=30) colored by class.}
+\label{fig:tsne_combined}
 \end{figure}
 
 \subsection{Clustering Analysis}
 
 Three algorithms were compared: K-Means, Agglomerative Hierarchical Clustering (ward, complete, average, single linkage), and DBSCAN.
 
-K-Means with K=3 achieved the highest practical utility with ARI=0.177, producing clusters most aligned with true labels. DBSCAN was excluded from ranking due to an extreme noise ratio (99.8\% of points classified as noise, ARI=0.000), confirming density-based methods are unsuitable for this high-dimensional dataset. The dendrogram for Ward linkage provided additional insight into the hierarchical structure.
+\textbf{K-Means Clustering:} We evaluated K=2 through K=10 using Silhouette, Calinski-Harabasz (CH), and Davies-Bouldin (DB) scores, alongside the Elbow method (Figure~\ref{fig:kmeans_eval}). K=3 was selected as it aligns with the target class count and shows a distinct elbow in inertia reduction. 
 
-The Elbow method (Figure~\ref{fig:elbow}) shows diminishing inertia reduction beyond K=3, supporting our choice. The K-Means cluster assignments projected onto the t-SNE embedding (Figure~\ref{fig:kmeans_tsne}) show reasonable alignment with the true class structure.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.49\linewidth]{../data/plots/01_kmeans_elbow.png}
-\includegraphics[width=0.49\linewidth]{../data/plots/03_kmeans_clusters_tsne.png}
-\caption{Left: Elbow method for K selection. Right: K-Means (K=3) clusters on t-SNE projection.}
-\label{fig:elbow}
+\includegraphics[width=0.6\linewidth]{../data/plots/01_kmeans_elbow.png}
+\vspace{1em} 
+\includegraphics[width=0.8\linewidth]{../data/plots/02_kmeans_metrics.png}
+\caption{Top: Elbow method for K selection. Bottom: Silhouette, CH, and DB evaluation metrics vs. K.}
+\label{fig:kmeans_eval}
 \end{figure}
+
+K-Means (K=3) achieved the highest practical utility with an Adjusted Rand Index (ARI) of 0.177. Cross-tabulation between clusters and true labels revealed significant structural insights: Cluster 1 is predominantly composed of Dropout students (82.7\%), whereas Clusters 0 and 2 both capture predominantly Graduate students ($\sim$60\%). This indicates that while dropouts form a relatively tight and distinct cluster, enrolled and graduate students share highly overlapping feature spaces. Figure~\ref{fig:kmeans_tsne} illustrates the cluster assignments mapped onto the t-SNE projection alongside the cluster size distribution.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.49\linewidth]{../data/plots/03_kmeans_clusters_tsne.png}
+\includegraphics[width=0.49\linewidth]{../data/plots/04_kmeans_size_distribution.png}
+\caption{Left: K-Means (K=3) clusters on t-SNE projection. Right: K-Means cluster size distribution.}
+\label{fig:kmeans_tsne}
+\end{figure}
+
+\textbf{Hierarchical Clustering:} The dendrogram for Ward linkage (Figure~\ref{fig:dendrogram}) shows a relatively flat hierarchical structure, supporting K-Means' spherical cluster assumption. Among the four linkage methods, Ward achieved the best ARI (0.084). A visual and metric comparison (Figure~\ref{fig:linkage_comparison}) revealed that single and average linkages were not just imbalanced, but completely uninformative. They produced one massive cluster alongside isolated outliers, yielding ARIs near zero (single: -0.0005, average: -0.0002). Conversely, Ward and complete linkages generated more balanced and meaningful partitions.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.49\linewidth]{../data/plots/03_dendrogram_ward.png}
+\includegraphics[width=0.49\linewidth]{../data/plots/07_hierarchical_linkage_comparison.png}
+\caption{Left: Hierarchical clustering dendrogram (Ward linkage). Right: Comparison of clusters generated by Ward, Complete, Average, and Single linkages.}
+\label{fig:hierarchical_analysis}
+\end{figure}
+
+\textbf{DBSCAN Analysis:} To systematically configure DBSCAN, we plotted the k-distance graph (Figure~\ref{fig:dbscan_kdist}) to identify the optimal $\epsilon$ parameter at the point of maximum curvature. Despite conducting a comprehensive grid search across multiple \texttt{eps} and \texttt{min\_samples} combinations, DBSCAN failed to discover meaningful structures. The high-dimensional nature of the dataset (50 selected features) caused severe distance concentration---a manifestation of the curse of dimensionality. This resulted in an extreme noise ratio where up to 99.8\% of data points were classified as noise (ARI=0.000), confirming that density-based methods are unsuitable for this specific feature space without more aggressive nonlinear dimensionality reduction.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\linewidth]{../data/plots/10_kdistance_plot.png}
+\caption{k-distance plot used for DBSCAN $\epsilon$ estimation.}
+\label{fig:dbscan_kdist}
+\end{figure}
+
+\textbf{Overall Algorithm Comparison:} To synthesize our findings, centroid-based and variance-minimizing approaches proved significantly more robust for this tabular dataset than density-based methods. As summarized in Figure~\ref{fig:algorithm_comparison}, K-Means (K=3) achieved the highest overall utility (ARI = 0.177) by successfully isolating the majority of Dropout students. Hierarchical clustering with Ward linkage provided a comparable, albeit slightly less distinct, partition (ARI = 0.084). In stark contrast, DBSCAN's failure (ARI = 0.000) highlights its vulnerability to the curse of dimensionality in our feature space, where distance concentration effectively obscures any natural density peaks. Ultimately, while K-Means provides the best macro-level segmentation, the inherent feature overlap between Enrolled and Graduate students remains the primary bottleneck across all unsupervised learning approaches.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\linewidth]{../data/plots/09_algorithm_comparison.png}
-\caption{Clustering algorithm comparison across five metrics.}
-\label{fig:clustering_comparison}
+\caption{Clustering algorithm comparison across metrics.}
+\label{fig:algorithm_comparison}
 \end{figure}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=\linewidth]{../data/plots/03_dendrogram_ward.png}
-\caption{Hierarchical clustering dendrogram (Ward linkage).}
-\label{fig:dendrogram}
-\end{figure}
-
-The dendrogram (Figure~\ref{fig:dendrogram}) shows that the data has a relatively flat hierarchical structure --- the three main clusters merge at similar distance levels, supporting K-Means' spherical cluster assumption. Among four linkage methods (ward/complete/average/single), Ward achieved the best ARI (0.084) with true labels.
-
-A comparison of four linkage methods revealed that single and average linkages produced highly imbalanced clusters (one dominant cluster + outliers), while Ward and complete linkages generated more balanced partitions. This confirms that centroid-based methods (K-Means, Ward) are most appropriate for this dataset.
 
 \subsection{Prediction: Training and Testing}
 
