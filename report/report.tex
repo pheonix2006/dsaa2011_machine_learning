@@ -79,7 +79,7 @@ StandardScaler was applied to all 45 numerical features (20 original continuous 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.65\linewidth]{../data/plots/01_eda_correlation_heatmap.png}
+\includegraphics[width=0.6\linewidth]{../data/plots/01_eda_correlation_heatmap.png}
 \caption{Top-20 feature correlations with the target variable.}
 \label{fig:eda_correlation}
 \end{figure}
@@ -87,6 +87,8 @@ StandardScaler was applied to all 45 numerical features (20 original continuous 
 The data was split 70/15/15 into training (3096), validation (664), and test (664) sets with stratified sampling to preserve class proportions.
 
 \subsection{Data Visualization (t-SNE)}
+
+To preserve the integrity of our unsupervised analysis and prevent data leakage, we applied t-SNE to the baseline preprocessed dataset (256 features, all 4,424 samples) rather than the engineered dataset, which incorporates target-encoded features that embed supervised label information.  
 
 We applied t-SNE to project the high-dimensional feature space into lower dimensions. A systematic pattern analysis across four perplexity values (Figure~\ref{fig:tsne_perplexity}) highlights the algorithm's sensitivity to local versus global structure. At a low perplexity ($p=5$), the projection is severely fragmented, obscuring any meaningful global patterns. Conversely, a high perplexity ($p=100$) over-smooths the manifold, causing a loss of fine-grained local detail while significantly increasing computational overhead.
 
@@ -101,13 +103,15 @@ Perplexity=30 achieves the optimal balance. The 2D projection (Figure~\ref{fig:t
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.39\linewidth]{../data/plots/04_tsne_2d_best.png}
-\includegraphics[width=0.39\linewidth]{../data/plots/05_tsne_3d_best.png}
+\includegraphics[width=0.34\linewidth]{../data/plots/04_tsne_2d_best.png}
+\includegraphics[width=0.34\linewidth]{../data/plots/05_tsne_3d_best.png}
 \caption{Left: t-SNE 2D projection (perplexity=30) colored by class. Right: t-SNE 3D projection (perplexity=30) colored by class.}
 \label{fig:tsne_combined}
 \end{figure}
 
 \subsection{Clustering Analysis}
+
+Consistent with the t-SNE analysis, clustering was also performed on the full baseline preprocessed dataset (256 features, 4,424 samples). Using the target-engineered feature set would introduce label information into the feature space, artificially inflating cluster purity metrics and violating the unsupervised setting.  
 
 Three algorithms were compared: K-Means, Agglomerative Hierarchical Clustering (ward, complete, average, single linkage), and DBSCAN.
 
@@ -116,14 +120,14 @@ Three algorithms were compared: K-Means, Agglomerative Hierarchical Clustering (
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.6\linewidth]{../data/plots/01_kmeans_elbow.png}
+\includegraphics[width=0.5\linewidth]{../data/plots/01_kmeans_elbow.png}
 \vspace{1em} 
 \includegraphics[width=0.8\linewidth]{../data/plots/02_kmeans_metrics.png}
 \caption{Top: Elbow method for K selection. Bottom: Silhouette, CH, and DB evaluation metrics vs. K.}
 \label{fig:kmeans_eval}
 \end{figure}
 
-K-Means (K=3) achieved the highest practical utility with an Adjusted Rand Index (ARI) of 0.177. Cross-tabulation between clusters and true labels revealed significant structural insights: Cluster 1 is predominantly composed of Dropout students (82.7\%), whereas Clusters 0 and 2 both capture predominantly Graduate students ($\sim$60\%). This indicates that while dropouts form a relatively tight and distinct cluster, enrolled and graduate students share highly overlapping feature spaces. Figure~\ref{fig:kmeans_tsne} illustrates the cluster assignments mapped onto the t-SNE projection alongside the cluster size distribution.
+K-Means (K=3) achieved the highest practical utility with an Adjusted Rand Index (ARI) of 0.177, producing reasonably balanced cluster sizes that correspond meaningfully to the three student categories. Cross-tabulation between clusters and true labels revealed significant structural insights: Cluster 1 is predominantly composed of Dropout students (82.7\%), whereas Clusters 0 and 2 both capture predominantly Graduate students ($\sim$60\%). This indicates that while dropouts form a relatively tight and distinct cluster, enrolled and graduate students share highly overlapping feature spaces. Figure~\ref{fig:kmeans_tsne} illustrates the cluster assignments mapped onto the t-SNE projection alongside the cluster size distribution.
 
 \begin{figure}[H]
 \centering
@@ -143,7 +147,7 @@ K-Means (K=3) achieved the highest practical utility with an Adjusted Rand Index
 \label{fig:hierarchical_analysis}
 \end{figure}
 
-\textbf{DBSCAN Analysis:} To systematically configure DBSCAN, we plotted the k-distance graph (Figure~\ref{fig:dbscan_kdist}) to identify the optimal $\epsilon$ parameter at the point of maximum curvature. Despite conducting a comprehensive grid search across multiple \texttt{eps} and \texttt{min\_samples} combinations, DBSCAN failed to discover meaningful structures. The high-dimensional nature of the dataset (50 selected features) caused severe distance concentration---a manifestation of the curse of dimensionality. This resulted in an extreme noise ratio where up to 99.8\% of data points were classified as noise (ARI=0.000), confirming that density-based methods are unsuitable for this specific feature space without more aggressive nonlinear dimensionality reduction.
+\textbf{DBSCAN Analysis:} To systematically configure DBSCAN, we plotted the k-distance graph (Figure~\ref{fig:dbscan_kdist}) to identify the optimal $\epsilon$ parameter at the point of maximum curvature. Despite conducting a comprehensive grid search across multiple \texttt{eps} and \texttt{min\_samples} combinations, DBSCAN failed to discover meaningful structures. The high-dimensional nature of the dataset caused severe distance concentration---a manifestation of the curse of dimensionality. This resulted in an extreme noise ratio where up to 99.8\% of data points were classified as noise (ARI=0.000), confirming that density-based methods are unsuitable for this specific feature space without more aggressive nonlinear dimensionality reduction.
 
 \begin{figure}[H]
 \centering
