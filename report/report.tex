@@ -13,6 +13,7 @@
 \usepackage{subcaption}
 \usepackage{url}
 \usepackage{xcolor}
+\usepackage{enumitem}
 
 \title{Student Dropout Prediction: A Machine Learning Analysis\\
 \large DSAA2011 (L01) Course Project --- HKUST(GZ) 2026 Spring}
@@ -39,7 +40,7 @@ The Student Dropout and Academic Success dataset from the UCI Machine Learning R
 
 Our objectives are: (1) explore data structure through visualization and clustering; (2) train and evaluate supervised classifiers; (3) improve models via validation-driven tuning; (4) investigate feature importance and ensemble methods.
 
-Our best-performing model, Random Forest with default hyperparameters (\texttt{n\_estimators=100, class\_weight='balanced'}), achieves a macro F1-score of 0.7107 on the held-out test set. A key challenge is the ``Enrolled'' class, which represents only 18\% of the data and is inherently ambiguous. By applying class-balanced weighting, we improve Enrolled class F1 from 0.00--0.52 (unweighted) to 0.47--0.52 (balanced) across all model types. Feature importance analysis confirms that academic performance metrics (approval rates, semester grades) are the dominant predictive signals.
+% Our best-performing model, Random Forest with default hyperparameters (\texttt{n\_estimators=100, class\_weight='balanced'}), achieves a macro F1-score of 0.7107 on the held-out test set. A key challenge is the ``Enrolled'' class, which represents only 18\% of the data and is inherently ambiguous. By applying class-balanced weighting, we improve Enrolled class F1 from 0.00--0.52 (unweighted) to 0.47--0.52 (balanced) across all model types. Feature importance analysis confirms that academic performance metrics (approval rates, semester grades) are the dominant predictive signals.
 
 % ====================
 \section{Mandatory Tasks}
@@ -55,22 +56,24 @@ StandardScaler was applied to all 45 numerical features (20 original continuous 
 \textbf{Missing values:} The dataset contains zero missing values across all 4,424 samples and 36 features, so no missing value handling methods were necessary.
 
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.8\linewidth]{../data/plots/01_eda_boxplots.png}
-\caption{Feature distributions by target class.}
-\label{fig:eda_boxplots}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.8\linewidth]{../data/plots/01_eda_categorical_distribution.png}
-\caption{Categorical feature distributions (Marital Status and Course) stacked by target class.}
-\label{fig:eda_categorical}
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}[c]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../data/plots/01_eda_boxplots.png}
+        \caption{Feature distributions by target class.}
+        \label{fig:eda_boxplots}
+    \end{minipage}\hfill
+    \begin{minipage}[c]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../data/plots/01_eda_categorical_distribution.png}
+        \caption{Categorical distributions stacked by target.}
+        \label{fig:eda_categorical}
+    \end{minipage}
 \end{figure}
 
 \textbf{Exploratory Data Analysis (EDA)} reveals several key patterns:
-\begin{itemize}
+\begin{itemize}[noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt]
     \item \textbf{Academic performance differences:} Graduate students have notably higher 1st/2nd semester grades than Dropout students, while the initial Admission grade shows less discrimination (Figure~\ref{fig:eda_boxplots}).
     \item \textbf{Age factor:} Dropout students tend to be older, showing a higher median age at enrollment.
     \item \textbf{Strongest predictive signals:} Curricular units approved and semester grade metrics show the strongest correlation with the target variable ($|r| > 0.3$) (Figure~\ref{fig:eda_correlation}).
@@ -92,21 +95,22 @@ To preserve the integrity of our unsupervised analysis and prevent data leakage,
 
 We applied t-SNE to project the high-dimensional feature space into lower dimensions. A systematic pattern analysis across four perplexity values (Figure~\ref{fig:tsne_perplexity}) highlights the algorithm's sensitivity to local versus global structure. At a low perplexity ($p=5$), the projection is severely fragmented, obscuring any meaningful global patterns. Conversely, a high perplexity ($p=100$) over-smooths the manifold, causing a loss of fine-grained local detail while significantly increasing computational overhead.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.6\linewidth]{../data/plots/03_tsne_2d_perplexity_comparison.png}
-\caption{t-SNE 2D projections at perplexity = 5, 30, 50, 100.}
-\label{fig:tsne_perplexity}
-\end{figure}
-
 Perplexity=30 achieves the optimal balance. The 2D projection (Figure~\ref{fig:tsne_combined}, left) reveals that Graduate students form a relatively compact region, while Dropout students cluster separately. Enrolled students are scattered between both groups, consistent with their transitional academic status. Furthermore, extending the projection from 2D to 3D (Figure~\ref{fig:tsne_combined}, right) provides additional spatial volume, further reducing the apparent overlap between the distinct Graduate and Dropout clusters.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.34\linewidth]{../data/plots/04_tsne_2d_best.png}
-\includegraphics[width=0.34\linewidth]{../data/plots/05_tsne_3d_best.png}
-\caption{Left: t-SNE 2D projection (perplexity=30) colored by class. Right: t-SNE 3D projection (perplexity=30) colored by class.}
-\label{fig:tsne_combined}
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}[c]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../data/plots/03_tsne_2d_perplexity_comparison.png}
+        \caption{t-SNE 2D projections at perplexity = 5, 30, 50, 100.}
+        \label{fig:tsne_perplexity}
+    \end{minipage}\hfill
+    \begin{minipage}[c]{0.4\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../data/plots/05_tsne_3d_best.png}
+        \caption{t-SNE 3D projection at perplexity=30.}
+        \label{fig:tsne_3d}
+    \end{minipage}
 \end{figure}
 
 \subsection{Clustering Analysis}
@@ -119,12 +123,18 @@ Three algorithms were compared: K-Means, Agglomerative Hierarchical Clustering (
 
 
 \begin{figure}[H]
-\centering
-\includegraphics[width=0.5\linewidth]{../data/plots/01_kmeans_elbow.png}
-\vspace{1em} 
-\includegraphics[width=0.8\linewidth]{../data/plots/02_kmeans_metrics.png}
-\caption{Top: Elbow method for K selection. Bottom: Silhouette, CH, and DB evaluation metrics vs. K.}
-\label{fig:kmeans_eval}
+    \centering
+    \begin{minipage}[c]{0.33\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../data/plots/01_kmeans_elbow.png}
+    \end{minipage}\hfill
+    \begin{minipage}[c]{0.65\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../data/plots/02_kmeans_metrics.png}
+    \end{minipage}
+    
+    \caption{Left: Elbow method for K selection. Right: Silhouette, CH, and DB evaluation metrics vs. K.}
+    \label{fig:kmeans_eval}
 \end{figure}
 
 K-Means (K=3) achieved the highest practical utility with an Adjusted Rand Index (ARI) of 0.177, producing reasonably balanced cluster sizes that correspond meaningfully to the three student categories. Cross-tabulation between clusters and true labels revealed significant structural insights: Cluster 1 is predominantly composed of Dropout students (82.7\%), whereas Clusters 0 and 2 both capture predominantly Graduate students ($\sim$60\%). This indicates that while dropouts form a relatively tight and distinct cluster, enrolled and graduate students share highly overlapping feature spaces. Figure~\ref{fig:kmeans_tsne} illustrates the cluster assignments mapped onto the t-SNE projection alongside the cluster size distribution.
@@ -141,20 +151,20 @@ K-Means (K=3) achieved the highest practical utility with an Adjusted Rand Index
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.49\linewidth]{../data/plots/03_dendrogram_ward.png}
-\includegraphics[width=0.49\linewidth]{../data/plots/07_hierarchical_linkage_comparison.png}
+\includegraphics[width=0.56\linewidth]{../data/plots/03_dendrogram_ward.png}
+\includegraphics[width=0.4\linewidth]{../data/plots/07_hierarchical_linkage_comparison.png}
 \caption{Left: Hierarchical clustering dendrogram (Ward linkage). Right: Comparison of clusters generated by Ward, Complete, Average, and Single linkages.}
 \label{fig:hierarchical_analysis}
 \end{figure}
 
 \textbf{DBSCAN Analysis:} To systematically configure DBSCAN, we plotted the k-distance graph (Figure~\ref{fig:dbscan_kdist}) to identify the optimal $\epsilon$ parameter at the point of maximum curvature. Despite conducting a comprehensive grid search across multiple \texttt{eps} and \texttt{min\_samples} combinations, DBSCAN failed to discover meaningful structures. The high-dimensional nature of the dataset caused severe distance concentration---a manifestation of the curse of dimensionality. This resulted in an extreme noise ratio where up to 99.8\% of data points were classified as noise (ARI=0.000), confirming that density-based methods are unsuitable for this specific feature space without more aggressive nonlinear dimensionality reduction.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.6\linewidth]{../data/plots/10_kdistance_plot.png}
-\caption{k-distance plot used for DBSCAN $\epsilon$ estimation.}
-\label{fig:dbscan_kdist}
-\end{figure}
+% \begin{figure}[H]
+% \centering
+% \includegraphics[width=0.6\linewidth]{../data/plots/10_kdistance_plot.png}
+% \caption{k-distance plot used for DBSCAN $\epsilon$ estimation.}
+% \label{fig:dbscan_kdist}
+% \end{figure}
 
 \textbf{Overall Algorithm Comparison:} To synthesize our findings, centroid-based and variance-minimizing approaches proved significantly more robust for this tabular dataset than density-based methods. As summarized in Figure~\ref{fig:algorithm_comparison}, K-Means (K=3) achieved the highest overall utility (ARI = 0.177) by successfully isolating the majority of Dropout students. Hierarchical clustering with Ward linkage provided a comparable, albeit slightly less distinct, partition (ARI = 0.084). In stark contrast, DBSCAN's failure (ARI = 0.000) highlights its vulnerability to the curse of dimensionality in our feature space, where distance concentration effectively obscures any natural density peaks. Ultimately, while K-Means provides the best macro-level segmentation, the inherent feature overlap between Enrolled and Graduate students remains the primary bottleneck across all unsupervised learning approaches.
 
@@ -176,12 +186,10 @@ We trained three classifiers using default configurations from \texttt{predictio
 
 \begin{figure}[H]
     \centering
-    % 左边放表格
     \begin{minipage}[c]{0.48\textwidth}
         \centering
         \captionof{table}{Baseline model performance across evaluation sets.}
         \label{tab:nb04_metrics}
-        % 使用 resizebox 防止表格过宽超出边界
         \resizebox{\linewidth}{!}{
             \begin{tabular}{@{}lcccc@{}}
             \toprule
@@ -194,7 +202,6 @@ We trained three classifiers using default configurations from \texttt{predictio
             \end{tabular}
         }
     \end{minipage}\hfill
-    % 右边放图片
     \begin{minipage}[c]{0.48\textwidth}
         \centering
         \includegraphics[width=\linewidth]{../data/plots/04_model_comparison_three_sets.png}
@@ -229,20 +236,41 @@ We retrained the baseline models with explicit configurations and computed detai
 
 \textbf{Detailed metrics.} Table~\ref{tab:nb05_metrics} reports the full set of evaluation metrics on the test set. LR leads across most metrics, while SVM achieves competitive precision at the cost of lower recall.
 
-\begin{table}[H]
-\centering
-\small
-\caption{Detailed per-model metrics on the test set.}
-\label{tab:nb05_metrics}
-\begin{tabular}{@{}lcccccc@{}}
-\toprule
-Model & Acc.\ & Prec.\ (macro) & Prec.\ (wtd) & Recall (macro) & Recall (wtd) & F1 (macro) \\
-\midrule
-Decision Tree & 0.7154 & 0.6876 & 0.7566 & 0.6964 & 0.7154 & 0.6795 \\
-Logistic Reg.\ & 0.7364 & 0.7119 & 0.7822 & 0.7190 & 0.7364 & 0.7027 \\
-SVM (RBF) & 0.7018 & 0.7039 & 0.7796 & 0.6881 & 0.7018 & 0.6662 \\
-\bottomrule
-\end{tabular}
+\begin{table}[htbp]
+    \centering
+    \small
+    \begin{minipage}[t]{0.6\textwidth}
+        \centering
+        \caption{Detailed per-model metrics on the test set.}
+        \label{tab:nb05_metrics}
+        \resizebox{\linewidth}{!}{
+            \begin{tabular}{@{}lcccccc@{}}
+            \toprule
+            Model & Acc.\ & Prec.\ (macro) & Recall (macro) & F1 (macro) \\
+            \midrule
+            Decision Tree & 0.7154 & 0.6876 & 0.6964 & 0.6795 \\
+            Logistic Reg.\ & 0.7364 & 0.7119 & 0.7190 & 0.7027 \\
+            SVM (RBF) & 0.7018 & 0.7039 & 0.6881 & 0.6662 \\
+            \bottomrule
+            \end{tabular}
+        }
+    \end{minipage}\hfill
+    \begin{minipage}[t]{0.36\textwidth}
+        \centering
+        \caption{Per-class and Macro AUC.}
+        \label{tab:auc_comparison}
+        \resizebox{\linewidth}{!}{
+            \begin{tabular}{@{}lccc@{}}
+            \toprule
+            Model & Dropout & Enrolled & Macro \\
+            \midrule
+            DT & 0.795 & 0.720 & 0.789 \\
+            LR & \textbf{0.916} & \textbf{0.829} & \textbf{0.893} \\
+            SVM & 0.906 & 0.816 & 0.882 \\
+            \bottomrule
+            \end{tabular}
+        }
+    \end{minipage}
 \end{table}
 
 \textbf{ROC curves and AUC.} Figure~\ref{fig:roc} shows the per-class ROC curves. LR achieves the highest macro AUC (0.893), followed by SVM (0.882) and DT (0.789). All models show the lowest AUC for the Enrolled class, confirming it as the primary classification challenge.
@@ -254,50 +282,27 @@ SVM (RBF) & 0.7018 & 0.7039 & 0.7796 & 0.6881 & 0.7018 & 0.6662 \\
 \label{fig:roc}
 \end{figure}
 
-The per-class AUC values are:
-\begin{table}[H]
-\centering
-\small
-\caption{Per-class and Macro AUC across baseline models.}
-\label{tab:auc_comparison}
-\begin{tabular}{@{}lcccc@{}}
-\toprule
-Model & Dropout AUC & Enrolled AUC & Graduate AUC & Macro AUC \\
-\midrule
-Decision Tree & 0.795 & 0.720 & 0.851 & 0.789 \\
-Logistic Reg. & \textbf{0.916} & \textbf{0.829} & \textbf{0.934} & \textbf{0.893} \\
-SVM (RBF)     & 0.906 & 0.816 & 0.923 & 0.882 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
 \textbf{Cross-validation.} 5-fold CV on the combined train+val set (3{,}760 samples) confirms LR as the most stable model: LR CV F1 = 0.7061 $\pm$ 0.0080, DT = 0.6568 $\pm$ 0.0146, SVM = 0.6548 $\pm$ 0.0056.
 
-\textbf{Validation curve analysis} (Figures~\ref{fig:valcurve} and~\ref{fig:valcurve_svm_gamma}) reveals model-specific sensitivity to hyperparameters:
+\textbf{Validation curve analysis} (Figures~\ref{fig:valcurves_all}) reveals model-specific sensitivity to hyperparameters:
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.32\linewidth]{../data/plots/05_valcurve_dt_depth.png}
-\includegraphics[width=0.32\linewidth]{../data/plots/05_valcurve_lr_c.png}
-\includegraphics[width=0.32\linewidth]{../data/plots/05_valcurve_svm_C.png}
-\caption{Validation curves: DT max\_depth (left), LR C (center), SVM C (right).}
-\label{fig:valcurve}
+\includegraphics[width=0.24\linewidth]{../data/plots/05_valcurve_dt_depth.png}\hfill
+\includegraphics[width=0.24\linewidth]{../data/plots/05_valcurve_lr_c.png}\hfill
+\includegraphics[width=0.24\linewidth]{../data/plots/05_valcurve_svm_C.png}\hfill
+\includegraphics[width=0.24\linewidth]{../data/plots/05_valcurve_svm_gamma.png}
+\caption{Validation curves. From left to right: DT max\_depth, LR C, SVM C, and SVM gamma (with C=10).}
+\label{fig:valcurves_all}
 \end{figure}
 
-\begin{itemize}
+\begin{itemize}[noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt]
 \item \textbf{DT (max\_depth):} When max\_depth is small, train and validation scores are close but both low --- underfitting. As depth increases, the training score rises continuously while the validation score begins to decline --- overfitting. The optimal max\_depth lies at the point where the train--val gap is smallest and the validation score is highest.
 \item \textbf{LR (C):} Relatively insensitive to C, suggesting the linear assumption is the primary bottleneck, not regularization strength.
 \item \textbf{SVM (C):} Performance improves significantly with larger C, indicating the default regularization is too strong for this dataset.
 \end{itemize}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.6\linewidth]{../data/plots/05_valcurve_svm_gamma.png}
-\caption{SVM validation curve for gamma (with C=10).}
-\label{fig:valcurve_svm_gamma}
-\end{figure}
-
-\begin{itemize}
+\begin{itemize}[noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt]
 \item \textbf{SVM (gamma):} High gamma values cause severe overfitting, as each training point becomes its own support vector. The optimal C and gamma must be tuned jointly --- gamma controls the RBF kernel's influence radius while C controls the regularization strength.
 \end{itemize}
 
@@ -312,36 +317,43 @@ SVM (RBF)     & 0.906 & 0.816 & 0.923 & 0.882 \\
 \label{fig:learning_curves}
 \end{figure}
 
-\textbf{Hyperparameter tuning via GridSearchCV} on the combined train+val set produced the best configurations:
-\begin{itemize}
-\item DT: \texttt{max\_depth=5, min\_samples\_split=2, min\_samples\_leaf=1} (CV F1=0.6837)
-\item LR: \texttt{C=100, penalty='l1', solver='saga'} (CV F1=0.7075)
-\item SVM: \texttt{C=100, gamma='scale'} (CV F1=0.6782)
-\end{itemize}
-
-Table~\ref{tab:tuning} compares baseline and tuned performance on the test set.
-
-\begin{table}[H]
-\centering
-\small
-\caption{Baseline vs.\ tuned model performance on test set (F1 macro).}
-\label{tab:tuning}
-\begin{tabular}{@{}lccc@{}}
-\toprule
-Model & Baseline & Tuned & $\Delta$ \\
-\midrule
-Decision Tree & 0.6795 & 0.6704 & $-$0.0091 \\
-Logistic Reg.\ & 0.7027 & 0.7009 & $-$0.0018 \\
-SVM (RBF) & 0.6449 & 0.6914 & +0.0465 \\
-\bottomrule
-\end{tabular}
-\end{table}
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}[c]{0.6\textwidth}
+        \textbf{Hyperparameter tuning via GridSearchCV} produced the best configurations:
+        \vspace{0.5em} 
+        
+        \resizebox{\linewidth}{!}{
+            \begin{tabular}{@{}lll@{}}
+            \textbf{DT:} & \texttt{max\_depth=5, min\_samples\_split=2, min\_samples\_leaf=1} & (CV F1=0.6837) \\
+            \textbf{LR:} & \texttt{C=100, penalty='l1', solver='saga'} & (CV F1=0.7075) \\
+            \textbf{SVM:} & \texttt{C=100, gamma='scale'} & (CV F1=0.6782) \\
+            \end{tabular}
+        }
+    \end{minipage}\hfill
+    \begin{minipage}[c]{0.38\textwidth}
+        \centering
+        \captionof{table}{Baseline vs.\ tuned (F1 macro).}
+        \label{tab:tuning}
+        \resizebox{\linewidth}{!}{
+            \begin{tabular}{@{}lccc@{}}
+            \toprule
+            Model & Baseline & Tuned & $\Delta$ \\
+            \midrule
+            DT & 0.6795 & 0.6704 & $-$0.0091 \\
+            LR & 0.7027 & 0.7009 & $-$0.0018 \\
+            SVM & 0.6449 & 0.6914 & +0.0465 \\
+            \bottomrule
+            \end{tabular}
+        }
+    \end{minipage}
+\end{figure}
 
 SVM benefited most from tuning (+0.0465 F1), where the expanded grid found optimal \texttt{C=100, gamma='scale'}. The increased C relaxed the regularization, allowing the RBF kernel to capture more complex non-linear patterns. DT and LR showed marginal decreases after tuning --- DT's optimal max\_depth dropped from 10 to 5, effectively reducing overfitting, while LR's switch to L1 regularization with C=100 had minimal impact, confirming that the linear assumption rather than regularization strength is LR's primary limitation. The confusion matrices for the tuned models (Figure~\ref{fig:cm_tuned}) show that the Enrolled class remains the most difficult to predict across all models.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\linewidth]{../data/plots/05_confusion_matrices_tuned.png}
+\includegraphics[width=0.8\linewidth]{../data/plots/05_confusion_matrices_tuned.png}
 \caption{Confusion matrices for tuned models on the test set.}
 \label{fig:cm_tuned}
 \end{figure}
@@ -357,31 +369,35 @@ Model performance is heavily influenced by the class imbalance (Graduate 49.9\%,
 
 We introduced two ensemble classifiers: Random Forest (RF) and Gradient Boosting (GB). Both aggregate multiple weak learners to reduce variance and improve generalization. Table~\ref{tab:ensemble} reports their performance. RF achieved a default test F1 (macro) of 0.7107 and GB achieved 0.6987, both exceeding the best baseline model (LR: 0.7027). After GridSearchCV tuning with expanded parameter grids (RF: $n\_estimators \in \{100, 300, 500\}$, $max\_depth \in \{None, 10, 20, 30\}$; GB: $learning\_rate \in \{0.01, 0.05, 0.1, 0.2\}$, $max\_depth \in \{3, 5, 8\}$), the tuned RF achieved F1=0.7087 (CV best=0.7221) and GB achieved F1=0.7083 (CV best=0.7099). The slight decrease from default to tuned on the test set suggests that the default hyperparameters were already near-optimal, though the higher CV scores indicate the tuned configurations generalize better on average.
 
-\begin{table}[H]
-\centering
-\small
-\caption{Ensemble model performance on the test set.}
-\label{tab:ensemble}
-\begin{tabular}{@{}lcccccc@{}}
-\toprule
-Model & Acc.\ & Prec.\ (macro) & Recall (macro) & F1 (macro) & F1 (wtd) \\
-\midrule
-RF (default) & 0.7816 & 0.7290 & 0.7028 & 0.7107 & 0.7717 \\
-GB (default) & 0.7681 & 0.7055 & 0.6940 & 0.6987 & 0.7635 \\
-RF (tuned) & 0.7545 & --- & --- & 0.7087 & 0.7605 \\
-GB (tuned) & 0.7756 & --- & --- & 0.7083 & 0.7703 \\
-\bottomrule
-\end{tabular}
-\end{table}
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}[c]{0.52\textwidth}
+        \centering
+        \captionof{table}{Ensemble model performance on the test set.}
+        \label{tab:ensemble}
+        \resizebox{\linewidth}{!}{
+            \begin{tabular}{@{}lccccc@{}} 
+            \toprule
+            Model & Acc.\ & Prec.\ (macro) & Recall (macro) & F1 (macro) & F1 (wtd) \\
+            \midrule
+            RF (default) & 0.7816 & 0.7290 & 0.7028 & 0.7107 & 0.7717 \\
+            GB (default) & 0.7681 & 0.7055 & 0.6940 & 0.6987 & 0.7635 \\
+            RF (tuned) & 0.7545 & --- & --- & 0.7087 & 0.7605 \\
+            GB (tuned) & 0.7756 & --- & --- & 0.7083 & 0.7703 \\
+            \bottomrule
+            \end{tabular}
+        }
+    \end{minipage}\hfill
+    \begin{minipage}[c]{0.44\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../data/plots/06_roc_ensemble.png}
+        \caption{ROC curves for tuned RF and GB (One-vs-Rest).}
+        \label{fig:roc_ensemble}
+    \end{minipage}
+\end{figure}
 
 The ROC analysis (Figure~\ref{fig:roc_ensemble}) shows that both ensemble models achieve strong per-class AUC: RF macro AUC=0.896 (Dropout 0.917, Enrolled 0.832, Graduate 0.938), GB macro AUC=0.888 (Dropout 0.912, Enrolled 0.814, Graduate 0.939). These values are comparable to or slightly above LR (macro AUC=0.893).
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.48\linewidth]{../data/plots/06_roc_ensemble.png}
-\caption{ROC curves for tuned RF and GB (One-vs-Rest).}
-\label{fig:roc_ensemble}
-\end{figure}
 
 \subsection{Class Imbalance Handling}
 
@@ -390,82 +406,102 @@ A critical improvement was the introduction of \texttt{class\_weight='balanced'}
 \subsection{Cross-Validation Comparison}
 
 A unified 5-fold cross-validation (Figure~\ref{fig:cv_boxplot}) compared all five model classes on the combined train+val set:
-\begin{itemize}
-\item RF: CV F1 = 0.7117 $\pm$ 0.0173 (highest mean)
-\item LR: CV F1 = 0.7063 $\pm$ 0.0126 (most stable)
-\item GB: CV F1 = 0.7023 $\pm$ 0.0158
-\item DT: CV F1 = 0.6671 $\pm$ 0.0158
-\item SVM: CV F1 = 0.6506 $\pm$ 0.0127
-\end{itemize}
-Ensemble methods exhibit both higher mean F1 and lower variance than most individual classifiers, confirming their robustness.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\linewidth]{../data/plots/06_cv_comparison_all_models.png}
-\caption{5-fold CV F1 (macro) comparison across all models.}
-\label{fig:cv_boxplot}
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}[c]{0.50\textwidth}
+        \centering
+        \captionof{table}{5-fold CV F1 (macro) results.}
+        \label{tab:cv_results}
+        \resizebox{\linewidth}{!}{
+            \begin{tabular}{@{}llc@{}}
+            \toprule
+            Model & CV F1 (Mean $\pm$ Std) & Note \\
+            \midrule
+            RF & 0.7117 $\pm$ 0.0173 & Highest mean \\
+            LR & 0.7063 $\pm$ 0.0126 & Most stable \\
+            GB & 0.7023 $\pm$ 0.0158 & --- \\
+            DT & 0.6671 $\pm$ 0.0158 & --- \\
+            SVM & 0.6506 $\pm$ 0.0127 & --- \\
+            \bottomrule
+            \end{tabular}
+        }
+    \end{minipage}\hfill
+    \begin{minipage}[c]{0.46\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../data/plots/06_cv_comparison_all_models.png}
+        \caption{5-fold CV comparison across all models.}
+        \label{fig:cv_boxplot}
+    \end{minipage}
 \end{figure}
+
+Ensemble methods exhibit both higher mean F1 and lower variance than most individual classifiers, confirming their robustness.
 
 \subsection{Feature Importance and Interactions}
 
 Feature importance scores (Figure~\ref{fig:feature_importance}) confirm that academic performance metrics dominate prediction. The top-10 features include \texttt{approval\_rate\_2nd}, \texttt{overall\_approval\_rate}, \texttt{Curricular units 2nd sem (grade)}, \texttt{grade\_per\_evaluation\_2nd}, \texttt{approval\_rate\_1st}, and other semester performance indicators.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=\linewidth]{../data/plots/06_feature_importance.png}
-\caption{Top feature importances from the ensemble model.}
-\label{fig:feature_importance}
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}[c]{0.54\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../data/plots/06_feature_importance.png}
+        \caption{Top feature importances (ensemble).}
+        \label{fig:feature_importance}
+    \end{minipage}\hfill
+    \begin{minipage}[c]{0.44\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../data/plots/06_feature_selection_impact.png}
+        \caption{Feature count vs.\ CV F1 score.}
+        \label{fig:feature_selection}
+    \end{minipage}
 \end{figure}
 
 We generated pairwise polynomial interaction features among the top-10 base features (45 interaction terms), expanding the feature set from 50 to 95 dimensions, then applied SelectKBest filtering. This captures non-linear relationships that individual features miss.
 
 Feature count experiments (Figure~\ref{fig:feature_selection}) show that performance plateaus at approximately 30--40 features. Top-10 features achieve CV F1=0.650, which is 4.5 percentage points below the optimum (CV F1=0.695 at Top-40). This confirms that while academic metrics provide the core signal, socioeconomic and demographic features contribute meaningful secondary information.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=\linewidth]{../data/plots/06_feature_selection_impact.png}
-\caption{Feature count vs.\ CV F1 score.}
-\label{fig:feature_selection}
-\end{figure}
 
 \subsection{Comprehensive Model Comparison}
 
 Table~\ref{tab:all_models} presents the full comparison of all seven model configurations on the test set. The ensemble methods achieve the highest F1 scores overall.
 
-\begin{table}[H]
-\centering
-\small
-\caption{Comprehensive comparison of all models on the test set.}
-\label{tab:all_models}
-\begin{tabular}{@{}lccc@{}}
-\toprule
-Model & Accuracy & F1 (macro) & F1 (weighted) \\
-\midrule
-Decision Tree & 0.7154 & 0.6795 & 0.7276 \\
-Logistic Regression & 0.7364 & 0.7027 & 0.7507 \\
-SVM (RBF) & 0.7018 & 0.6662 & 0.7193 \\
-RF (default) & 0.7816 & 0.7107 & 0.7717 \\
-GB (default) & 0.7681 & 0.6987 & 0.7635 \\
-RF (tuned) & 0.7545 & 0.7087 & 0.7605 \\
-GB (tuned) & 0.7756 & 0.7083 & 0.7703 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\linewidth]{../data/plots/06_all_models_comparison.png}
-\caption{Comprehensive comparison of all models --- F1 (macro) and accuracy.}
-\label{fig:all_models_comparison}
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}[c]{0.4\textwidth}
+        \centering
+        \captionof{table}{Comprehensive comparison of all models on the test set.}
+        \label{tab:all_models}
+        \resizebox{\linewidth}{!}{
+            \begin{tabular}{@{}lccc@{}}
+            \toprule
+            Model & Accuracy & F1 (macro) & F1 (weighted) \\
+            \midrule
+            Decision Tree & 0.7154 & 0.6795 & 0.7276 \\
+            Logistic Regression & 0.7364 & 0.7027 & 0.7507 \\
+            SVM (RBF) & 0.7018 & 0.6662 & 0.7193 \\
+            RF (default) & 0.7816 & 0.7107 & 0.7717 \\
+            GB (default) & 0.7681 & 0.6987 & 0.7635 \\
+            RF (tuned) & 0.7545 & 0.7087 & 0.7605 \\
+            GB (tuned) & 0.7756 & 0.7083 & 0.7703 \\
+            \bottomrule
+            \end{tabular}
+        }
+    \end{minipage}\hfill
+    \begin{minipage}[c]{0.56\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../data/plots/06_all_models_comparison.png}
+        \caption{Comprehensive comparison of all models --- F1 (macro) and accuracy.}
+        \label{fig:all_models_comparison}
+    \end{minipage}
 \end{figure}
 
 % ====================
 \section{Conclusion}
 
-This study applied a complete machine learning pipeline to the UCI Student Dropout and Academic Success dataset, achieving a best test F1 (macro) of 0.7107 with Random Forest (default hyperparameters).
+% This study applied a complete machine learning pipeline to the UCI Student Dropout and Academic Success dataset, achieving a best test F1 (macro) of 0.7107 with Random Forest (default hyperparameters).
 
 \textbf{Key findings:}
-\begin{itemize}
+\begin{itemize}[noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt]
     \item Academic performance metrics---particularly approval rates and semester grades---are the strongest predictors of student outcomes, dominating feature importance rankings across all tree-based models. Feature count experiments confirm that 30--40 features capture the optimal signal, with socioeconomic and demographic features providing meaningful secondary predictive power.
     
     \item The ``Enrolled'' class, comprising only 18\% of the dataset, represents an inherently ambiguous category between Dropout and Graduate, posing the primary classification challenge. Class-balanced weighting improved Enrolled F1 from 0.00--0.52 (unweighted) to 0.47--0.52 (balanced) across model types; SVM showed the most dramatic improvement, rising from 0.000 to 0.475 because it originally never predicted the Enrolled class.
