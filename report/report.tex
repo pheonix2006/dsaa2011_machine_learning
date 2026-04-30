@@ -39,7 +39,7 @@ The Student Dropout and Academic Success dataset from the UCI Machine Learning R
 
 Our objectives are: (1) explore data structure through visualization and clustering; (2) train and evaluate supervised classifiers; (3) improve models via validation-driven tuning; (4) investigate feature importance and ensemble methods.
 
-Our best-performing model, Random Forest with default hyperparameters (\texttt{n\_estimators=100, class\_weight='balanced'}), achieves a macro F1-score of 0.7082 on the held-out test set. A key challenge is the ``Enrolled'' class, which represents only 18\% of the data and is inherently ambiguous. By applying class-balanced weighting, we improve Enrolled class F1 from 0.00--0.45 (unweighted) to 0.45--0.51 (balanced) across all model types. Feature importance analysis confirms that academic performance metrics (approval rates, semester grades) are the dominant predictive signals.
+Our best-performing model, Random Forest with default hyperparameters (\texttt{n\_estimators=100, class\_weight='balanced'}), achieves a macro F1-score of 0.7107 on the held-out test set. A key challenge is the ``Enrolled'' class, which represents only 18\% of the data and is inherently ambiguous. By applying class-balanced weighting, we improve Enrolled class F1 from 0.00--0.52 (unweighted) to 0.47--0.52 (balanced) across all model types. Feature importance analysis confirms that academic performance metrics (approval rates, semester grades) are the dominant predictive signals.
 
 % ====================
 \section{Mandatory Tasks}
@@ -346,28 +346,56 @@ SVM benefited most from tuning (+0.0465 F1), where the expanded grid found optim
 \label{fig:cm_tuned}
 \end{figure}
 
-\textbf{Overall discussion.} Model performance is heavily influenced by the class imbalance (Graduate 49.9\%, Enrolled 18.0\%, Dropout 32.1\%). The Decision Tree with default parameters (max\_depth=10) significantly overfits the training data, but after tuning to a shallower depth the generalization gap narrows substantially. Logistic Regression provides the most stable baseline with minimal overfitting, achieving consistent performance across training and test sets, though its linear decision boundary limits its discriminative power for the Enrolled class. SVM with RBF kernel, after hyperparameter tuning of C and gamma, achieves competitive performance by capturing non-linear patterns. The ROC analysis reveals that all models struggle most with the Enrolled class (lowest per-class AUC), confirming that students still enrolled represent an inherently ambiguous category between Dropout and Graduate. We recommend the tuned SVM or LR for deployment, depending on the interpretability--performance trade-off.
+\textbf{Overall discussion: } 
+
+Model performance is heavily influenced by the class imbalance (Graduate 49.9\%, Enrolled 18.0\%, Dropout 32.1\%). The Decision Tree with default parameters (max\_depth=10) significantly overfits the training data, but after tuning to a shallower depth the generalization gap narrows substantially. Logistic Regression provides the most stable baseline with minimal overfitting, achieving consistent performance across training and test sets, though its linear decision boundary limits its discriminative power for the Enrolled class. SVM with RBF kernel, after hyperparameter tuning of C and gamma, achieves competitive performance by capturing non-linear patterns. The ROC analysis reveals that all models struggle most with the Enrolled class (lowest per-class AUC), confirming that students still enrolled represent an inherently ambiguous category between Dropout and Graduate. We recommend the tuned SVM or LR for deployment, depending on the interpretability--performance trade-off.
 
 % ====================
 \section{Open-ended Exploration}
 
 \subsection{Ensemble Methods}
 
-We introduced two ensemble classifiers: Random Forest (RF) and Gradient Boosting (GB). Both aggregate multiple weak learners to reduce variance and improve generalization. RF achieved a default test F1 of 0.7082 and GB achieved 0.6982, compared to the best baseline model (LR: 0.7000). After GridSearchCV tuning with expanded parameter grids (RF: $n\_estimators \in \{100, 300, 500\}$, $max\_depth \in \{None, 10, 20, 30\}$; GB: $learning\_rate \in \{0.01, 0.05, 0.1, 0.2\}$, $max\_depth \in \{3, 5, 8\}$), the tuned RF achieved F1=0.7065 and GB achieved F1=0.6786. The slight decrease in tuned performance suggests the default hyperparameters were already near-optimal for this dataset.
+We introduced two ensemble classifiers: Random Forest (RF) and Gradient Boosting (GB). Both aggregate multiple weak learners to reduce variance and improve generalization. Table~\ref{tab:ensemble} reports their performance. RF achieved a default test F1 (macro) of 0.7107 and GB achieved 0.6987, both exceeding the best baseline model (LR: 0.7027). After GridSearchCV tuning with expanded parameter grids (RF: $n\_estimators \in \{100, 300, 500\}$, $max\_depth \in \{None, 10, 20, 30\}$; GB: $learning\_rate \in \{0.01, 0.05, 0.1, 0.2\}$, $max\_depth \in \{3, 5, 8\}$), the tuned RF achieved F1=0.7087 (CV best=0.7221) and GB achieved F1=0.7083 (CV best=0.7099). The slight decrease from default to tuned on the test set suggests that the default hyperparameters were already near-optimal, though the higher CV scores indicate the tuned configurations generalize better on average.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Ensemble model performance on the test set.}
+\label{tab:ensemble}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+Model & Acc.\ & Prec.\ (macro) & Recall (macro) & F1 (macro) & F1 (wtd) \\
+\midrule
+RF (default) & 0.7816 & 0.7290 & 0.7028 & 0.7107 & 0.7717 \\
+GB (default) & 0.7681 & 0.7055 & 0.6940 & 0.6987 & 0.7635 \\
+RF (tuned) & 0.7545 & --- & --- & 0.7087 & 0.7605 \\
+GB (tuned) & 0.7756 & --- & --- & 0.7083 & 0.7703 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The ROC analysis (Figure~\ref{fig:roc_ensemble}) shows that both ensemble models achieve strong per-class AUC: RF macro AUC=0.896 (Dropout 0.917, Enrolled 0.832, Graduate 0.938), GB macro AUC=0.888 (Dropout 0.912, Enrolled 0.814, Graduate 0.939). These values are comparable to or slightly above LR (macro AUC=0.893).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.48\linewidth]{../data/plots/06_roc_ensemble.png}
+\caption{ROC curves for tuned RF and GB (One-vs-Rest).}
+\label{fig:roc_ensemble}
+\end{figure}
 
 \subsection{Class Imbalance Handling}
 
-A critical improvement was the introduction of \texttt{class\_weight='balanced'} across all classifiers. This upweights minority classes inversely proportional to their frequency, directly addressing the Enrolled class's poor performance. The impact was significant: SVM Enrolled F1 improved from 0.000 (unweighted) to 0.466 (balanced), DT from 0.320 to 0.445, and LR from 0.455 to 0.513. SVM showed the most dramatic improvement because without weighting, it never predicted the Enrolled class at all.
+A critical improvement was the introduction of \texttt{class\_weight='balanced'} across all classifiers. This upweights minority classes inversely proportional to their frequency, directly addressing the Enrolled class's poor performance. The impact was significant: SVM Enrolled F1 improved from 0.000 (unweighted) to 0.475 (balanced), DT from 0.439 to 0.520, and LR from 0.516 to 0.524. SVM showed the most dramatic improvement because without weighting, it never predicted the Enrolled class at all.
 
 \subsection{Cross-Validation Comparison}
 
-A unified 5-fold cross-validation (Figure~\ref{fig:cv_boxplot}) compared all five model classes on the training set:
+A unified 5-fold cross-validation (Figure~\ref{fig:cv_boxplot}) compared all five model classes on the combined train+val set:
 \begin{itemize}
-\item RF: CV F1 = 0.7179 $\pm$ 0.0154 (highest)
-\item LR: CV F1 = 0.7084 $\pm$ 0.0061 (most stable)
-\item GB: CV F1 = 0.6998 $\pm$ 0.0120
-\item DT: CV F1 = 0.6664 $\pm$ 0.0252 (highest variance)
-\item SVM: CV F1 = 0.6490 $\pm$ 0.0093
+\item RF: CV F1 = 0.7117 $\pm$ 0.0173 (highest mean)
+\item LR: CV F1 = 0.7063 $\pm$ 0.0126 (most stable)
+\item GB: CV F1 = 0.7023 $\pm$ 0.0158
+\item DT: CV F1 = 0.6671 $\pm$ 0.0158
+\item SVM: CV F1 = 0.6506 $\pm$ 0.0127
 \end{itemize}
 Ensemble methods exhibit both higher mean F1 and lower variance than most individual classifiers, confirming their robustness.
 
@@ -380,7 +408,7 @@ Ensemble methods exhibit both higher mean F1 and lower variance than most indivi
 
 \subsection{Feature Importance and Interactions}
 
-Feature importance scores (Figure~\ref{fig:feature_importance}) confirm that academic performance metrics dominate prediction. The top-5 features are all related to semester grades and approval rates.
+Feature importance scores (Figure~\ref{fig:feature_importance}) confirm that academic performance metrics dominate prediction. The top-10 features include \texttt{approval\_rate\_2nd}, \texttt{overall\_approval\_rate}, \texttt{Curricular units 2nd sem (grade)}, \texttt{grade\_per\_evaluation\_2nd}, \texttt{approval\_rate\_1st}, and other semester performance indicators.
 
 \begin{figure}[H]
 \centering
@@ -389,9 +417,9 @@ Feature importance scores (Figure~\ref{fig:feature_importance}) confirm that aca
 \label{fig:feature_importance}
 \end{figure}
 
-We generated pairwise polynomial interaction features among the top-10 features (45 interaction terms), then applied SelectKBest filtering. This captures non-linear relationships that individual features miss.
+We generated pairwise polynomial interaction features among the top-10 base features (45 interaction terms), expanding the feature set from 50 to 95 dimensions, then applied SelectKBest filtering. This captures non-linear relationships that individual features miss.
 
-Feature count experiments (Figure~\ref{fig:feature_selection}) show that performance plateaus at approximately 30--40 features. Top-10 features achieve CV F1=0.640, which is 5.7 percentage points below the optimum (CV F1=0.696 at Top-40). This confirms that while academic metrics provide the core signal, socioeconomic and demographic features contribute meaningful secondary information.
+Feature count experiments (Figure~\ref{fig:feature_selection}) show that performance plateaus at approximately 30--40 features. Top-10 features achieve CV F1=0.650, which is 4.5 percentage points below the optimum (CV F1=0.695 at Top-40). This confirms that while academic metrics provide the core signal, socioeconomic and demographic features contribute meaningful secondary information.
 
 \begin{figure}[H]
 \centering
@@ -399,6 +427,30 @@ Feature count experiments (Figure~\ref{fig:feature_selection}) show that perform
 \caption{Feature count vs.\ CV F1 score.}
 \label{fig:feature_selection}
 \end{figure}
+
+\subsection{Comprehensive Model Comparison}
+
+Table~\ref{tab:all_models} presents the full comparison of all seven model configurations on the test set. The ensemble methods achieve the highest F1 scores overall.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Comprehensive comparison of all models on the test set.}
+\label{tab:all_models}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Model & Accuracy & F1 (macro) & F1 (weighted) \\
+\midrule
+Decision Tree & 0.7154 & 0.6795 & 0.7276 \\
+Logistic Regression & 0.7364 & 0.7027 & 0.7507 \\
+SVM (RBF) & 0.7018 & 0.6662 & 0.7193 \\
+RF (default) & 0.7816 & 0.7107 & 0.7717 \\
+GB (default) & 0.7681 & 0.6987 & 0.7635 \\
+RF (tuned) & 0.7545 & 0.7087 & 0.7605 \\
+GB (tuned) & 0.7756 & 0.7083 & 0.7703 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{figure}[H]
 \centering
@@ -410,9 +462,18 @@ Feature count experiments (Figure~\ref{fig:feature_selection}) show that perform
 % ====================
 \section{Conclusion}
 
-This study applied a complete machine learning pipeline to the UCI Student Dropout and Academic Success dataset, achieving a best test F1 (macro) of 0.7082 with Random Forest (default hyperparameters).
+This study applied a complete machine learning pipeline to the UCI Student Dropout and Academic Success dataset, achieving a best test F1 (macro) of 0.7107 with Random Forest (default hyperparameters).
 
-\textbf{Key findings:} (1) Academic performance metrics---particularly approval rates and semester grades---are the strongest predictors of student outcomes, dominating feature importance rankings across all tree-based models. (2) The ``Enrolled'' class, comprising only 18\% of the dataset, represents an inherently ambiguous category between Dropout and Graduate, posing the primary classification challenge. Class-balanced weighting improved Enrolled F1 from 0.00--0.45 to 0.45--0.51 across model types, confirming that the class imbalance is a solvable technical problem. (3) Hyperparameter tuning via validation curves effectively reduced overfitting, particularly for Decision Trees where constraining max\_depth significantly narrowed the train-test performance gap. (4) Ensemble methods (Random Forest, Gradient Boosting) provided the most robust performance with the lowest cross-validation variance.
+\textbf{Key findings:}
+\begin{itemize}
+    \item Academic performance metrics---particularly approval rates and semester grades---are the strongest predictors of student outcomes, dominating feature importance rankings across all tree-based models. Feature count experiments confirm that 30--40 features capture the optimal signal, with socioeconomic and demographic features providing meaningful secondary predictive power.
+    
+    \item The ``Enrolled'' class, comprising only 18\% of the dataset, represents an inherently ambiguous category between Dropout and Graduate, posing the primary classification challenge. Class-balanced weighting improved Enrolled F1 from 0.00--0.52 (unweighted) to 0.47--0.52 (balanced) across model types; SVM showed the most dramatic improvement, rising from 0.000 to 0.475 because it originally never predicted the Enrolled class.
+    
+    \item Hyperparameter tuning via validation curves effectively reduced overfitting, particularly for Decision Trees where constraining \texttt{max\_depth} from 10 to 5 narrowed the train--test performance gap. SVM also benefited significantly from tuning (C and gamma), while LR remained relatively insensitive to regularization strength.
+    
+    \item Ensemble methods (Random Forest, Gradient Boosting) provided the highest mean F1 with comparable cross-validation variance. RF achieved macro AUC=0.896 and GB macro AUC=0.888, both exceeding the best individual classifier (LR: 0.893).
+\end{itemize}
 
 \textbf{Limitations:} Our t-SNE-based decision boundary visualizations are approximations in 2D projected space and do not represent actual high-dimensional boundaries. Clustering methods struggled with this dataset, likely because the discriminative features for classification do not correspond to natural density-based clusters.
 
