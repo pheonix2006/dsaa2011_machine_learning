@@ -227,6 +227,24 @@ The decision boundaries (Figure~\ref{fig:decision_boundary}), visualized in t-SN
 
 We retrained the baseline models with explicit configurations and computed detailed precision, recall, and F1 metrics. We then applied One-vs-Rest ROC curves, cross-validation, validation curves, learning curves, and GridSearchCV hyperparameter tuning.
 
+\textbf{Detailed metrics.} Table~\ref{tab:nb05_metrics} reports the full set of evaluation metrics on the test set. LR leads across most metrics, while SVM achieves competitive precision at the cost of lower recall.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Detailed per-model metrics on the test set.}
+\label{tab:nb05_metrics}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+Model & Acc.\ & Prec.\ (macro) & Prec.\ (wtd) & Recall (macro) & Recall (wtd) & F1 (macro) \\
+\midrule
+Decision Tree & 0.7154 & 0.6876 & 0.7566 & 0.6964 & 0.7154 & 0.6795 \\
+Logistic Reg.\ & 0.7364 & 0.7119 & 0.7822 & 0.7190 & 0.7364 & 0.7027 \\
+SVM (RBF) & 0.7018 & 0.7039 & 0.7796 & 0.6881 & 0.7018 & 0.6662 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \textbf{ROC curves and AUC.} Figure~\ref{fig:roc} shows the per-class ROC curves. LR achieves the highest macro AUC (0.893), followed by SVM (0.882) and DT (0.789). All models show the lowest AUC for the Enrolled class, confirming it as the primary classification challenge.
 
 \begin{figure}[H]
@@ -237,15 +255,25 @@ We retrained the baseline models with explicit configurations and computed detai
 \end{figure}
 
 The per-class AUC values are:
-\begin{itemize}
-\item DT: Dropout AUC=0.795, Enrolled AUC=0.720, Graduate AUC=0.851, Macro AUC=0.789
-\item LR: Dropout AUC=0.916, Enrolled AUC=0.829, Graduate AUC=0.934, Macro AUC=0.893
-\item SVM: Dropout AUC=0.906, Enrolled AUC=0.816, Graduate AUC=0.923, Macro AUC=0.882
-\end{itemize}
+\begin{table}[H]
+\centering
+\small
+\caption{Per-class and Macro AUC across baseline models.}
+\label{tab:auc_comparison}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Model & Dropout AUC & Enrolled AUC & Graduate AUC & Macro AUC \\
+\midrule
+Decision Tree & 0.795 & 0.720 & 0.851 & 0.789 \\
+Logistic Reg. & \textbf{0.916} & \textbf{0.829} & \textbf{0.934} & \textbf{0.893} \\
+SVM (RBF)     & 0.906 & 0.816 & 0.923 & 0.882 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \textbf{Cross-validation.} 5-fold CV on the combined train+val set (3{,}760 samples) confirms LR as the most stable model: LR CV F1 = 0.7061 $\pm$ 0.0080, DT = 0.6568 $\pm$ 0.0146, SVM = 0.6548 $\pm$ 0.0056.
 
-\textbf{Validation curve analysis} (Figure~\ref{fig:valcurve}) reveals model-specific sensitivity to hyperparameters:
+\textbf{Validation curve analysis} (Figures~\ref{fig:valcurve} and~\ref{fig:valcurve_svm_gamma}) reveals model-specific sensitivity to hyperparameters:
 
 \begin{figure}[H]
 \centering
@@ -257,12 +285,23 @@ The per-class AUC values are:
 \end{figure}
 
 \begin{itemize}
-\item \textbf{DT (max\_depth):} Clear overfitting beyond depth 8 --- training score continues rising while validation score declines. Optimal range: 5--7.
+\item \textbf{DT (max\_depth):} When max\_depth is small, train and validation scores are close but both low --- underfitting. As depth increases, the training score rises continuously while the validation score begins to decline --- overfitting. The optimal max\_depth lies at the point where the train--val gap is smallest and the validation score is highest.
 \item \textbf{LR (C):} Relatively insensitive to C, suggesting the linear assumption is the primary bottleneck, not regularization strength.
-\item \textbf{SVM (C and gamma):} Performance improves significantly with larger C. High gamma values cause severe overfitting, as each training point becomes its own support vector.
+\item \textbf{SVM (C):} Performance improves significantly with larger C, indicating the default regularization is too strong for this dataset.
 \end{itemize}
 
-\textbf{Learning curves} (Figure~\ref{fig:learning_curves}) show that DT exhibits a persistent train-validation gap indicative of overfitting, LR converges well suggesting near-capacity generalization, and SVM continues to benefit from more data.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\linewidth]{../data/plots/05_valcurve_svm_gamma.png}
+\caption{SVM validation curve for gamma (with C=10).}
+\label{fig:valcurve_svm_gamma}
+\end{figure}
+
+\begin{itemize}
+\item \textbf{SVM (gamma):} High gamma values cause severe overfitting, as each training point becomes its own support vector. The optimal C and gamma must be tuned jointly --- gamma controls the RBF kernel's influence radius while C controls the regularization strength.
+\end{itemize}
+
+\textbf{Learning curves} (Figure~\ref{fig:learning_curves}) show how training set size affects model performance. DT exhibits a persistent train--validation gap indicative of overfitting --- more data provides only marginal improvement because the model complexity captures noise. LR converges well, suggesting near-capacity generalization given the linear assumption. SVM shows a moderate gap, and its validation score continues to rise with more data, suggesting it could benefit from a larger training set.
 
 \begin{figure}[H]
 \centering
@@ -298,7 +337,7 @@ SVM (RBF) & 0.6449 & 0.6914 & +0.0465 \\
 \end{tabular}
 \end{table}
 
-SVM benefited most from tuning (+0.0465 F1), where the expanded grid found optimal \texttt{C=100, gamma='scale'}. DT and LR showed marginal decreases, suggesting their default configurations were already near-optimal. The confusion matrices for the tuned models (Figure~\ref{fig:cm_tuned}) show that the Enrolled class remains the most difficult to predict across all models.
+SVM benefited most from tuning (+0.0465 F1), where the expanded grid found optimal \texttt{C=100, gamma='scale'}. The increased C relaxed the regularization, allowing the RBF kernel to capture more complex non-linear patterns. DT and LR showed marginal decreases after tuning --- DT's optimal max\_depth dropped from 10 to 5, effectively reducing overfitting, while LR's switch to L1 regularization with C=100 had minimal impact, confirming that the linear assumption rather than regularization strength is LR's primary limitation. The confusion matrices for the tuned models (Figure~\ref{fig:cm_tuned}) show that the Enrolled class remains the most difficult to predict across all models.
 
 \begin{figure}[H]
 \centering
@@ -306,6 +345,8 @@ SVM benefited most from tuning (+0.0465 F1), where the expanded grid found optim
 \caption{Confusion matrices for tuned models on the test set.}
 \label{fig:cm_tuned}
 \end{figure}
+
+\textbf{Overall discussion.} Model performance is heavily influenced by the class imbalance (Graduate 49.9\%, Enrolled 18.0\%, Dropout 32.1\%). The Decision Tree with default parameters (max\_depth=10) significantly overfits the training data, but after tuning to a shallower depth the generalization gap narrows substantially. Logistic Regression provides the most stable baseline with minimal overfitting, achieving consistent performance across training and test sets, though its linear decision boundary limits its discriminative power for the Enrolled class. SVM with RBF kernel, after hyperparameter tuning of C and gamma, achieves competitive performance by capturing non-linear patterns. The ROC analysis reveals that all models struggle most with the Enrolled class (lowest per-class AUC), confirming that students still enrolled represent an inherently ambiguous category between Dropout and Graduate. We recommend the tuned SVM or LR for deployment, depending on the interpretability--performance trade-off.
 
 % ====================
 \section{Open-ended Exploration}
