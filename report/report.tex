@@ -46,21 +46,36 @@ Our best-performing model, Random Forest with default hyperparameters (\texttt{n
 
 \subsection{Data Preprocessing}
 
-We classified the 36 raw features into four types: \textit{nominal} (8 features, one-hot encoded), \textit{binary} (8 features, kept as 0 / 1), \textit{continuous} (7 features), and \textit{count} (13 features). 
+We classified the 36 raw features into four types: \textit{nominal} (8 features, one-hot encoded), \textit{binary} (8 features, kept as 0/1), \textit{continuous} (7 features), and \textit{count} (13 features). 
 
-Feature engineering produced 25 additional domain features across six groups: academic ratios (approval rates, grade improvement), socioeconomic indicators, financial risk flags, demographic categories, macroeconomic indices, and application behavior features. Out-of-fold target encoding was used for high-cardinality categorical features to prevent data leakage.
+Feature engineering produced 25 additional domain features across six groups: academic ratios, socioeconomic indicators, financial risk flags, demographic categories, macroeconomic indices, and application behavior features. Notably, our subsequent feature importance analysis confirmed that these engineered metrics provided the strongest predictive signals. The top five features overall were all engineered academic ratios: \texttt{overall\_approval\_rate} (importance=0.1002), \texttt{approval\_rate\_2nd} (0.0691), \texttt{total\_approved} (0.0504), \texttt{approval\_rate\_1st} (0.0448), and \texttt{grade\_per\_evaluation\_2nd} (0.0421). Out-of-fold target encoding was used for high-cardinality categorical features to prevent data leakage.
 
-StandardScaler was applied to all 45 numerical features (the 20 original continuous and count features with the 25 newly engineered domain features) to ensure uniform scale without distorting binary indicators. Feature selection retained the top-50 features by tree-based importance out of 61 candidates after target encoding.
+StandardScaler was applied to all 45 numerical features (20 original continuous / count features and the 25 newly engineered domain features) to ensure uniform scale without affecting binary indicators. Feature selection retained the top-50 features by tree-based importance (out of 61 candidates after target encoding).
+
+\textbf{Missing values:} The dataset contains zero missing values across all 4,424 samples and 36 features, so no missing value handling methods were necessary.
+
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\linewidth]{../data/plots/01_eda_boxplots.png}
+\includegraphics[width=0.8\linewidth]{../data/plots/01_eda_boxplots.png}
 \caption{Feature distributions by target class.}
 \label{fig:eda_boxplots}
 \end{figure}
 
-\textbf{Missing values:} The dataset contains zero missing values across all 4,424 samples and 36 features, so no imputation was necessary.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\linewidth]{../data/plots/01_eda_categorical_distribution.png}
+\caption{Categorical feature distributions (Marital Status and Course) stacked by target class.}
+\label{fig:eda_categorical}
+\end{figure}
 
-\textbf{Exploratory Data Analysis (EDA)} reveals several key patterns (Figure~\ref{fig:eda_boxplots}): (1) Graduate students have notably higher 1st/2nd semester grades than Dropout students, while Admission grade shows less discrimination. (2) Dropout students tend to be older (higher median age at enrollment). (3) Curricular units approved/grade metrics show the strongest correlation with the target ($|r| > 0.3$). (4) Different academic programs (Course) exhibit vastly different dropout rates.
+\textbf{Exploratory Data Analysis (EDA)} reveals several key patterns:
+\begin{itemize}
+    \item \textbf{Academic performance differences:} Graduate students have notably higher 1st/2nd semester grades than Dropout students, while the initial Admission grade shows less discrimination (Figure~\ref{fig:eda_boxplots}).
+    \item \textbf{Age factor:} Dropout students tend to be older, showing a higher median age at enrollment.
+    \item \textbf{Strongest predictive signals:} Curricular units approved and semester grade metrics show the strongest correlation with the target variable ($|r| > 0.3$) (Figure~\ref{fig:eda_correlation}).
+    \item \textbf{Demographics and program variations:} Different academic programs (Course) and demographic factors (e.g., Marital Status) exhibit vastly different dropout rates, as illustrated by the stacked distributions in Figure~\ref{fig:eda_categorical}.
+\end{itemize}
 
 \begin{figure}[H]
 \centering
@@ -73,23 +88,21 @@ The data was split 70/15/15 into training (3096), validation (664), and test (66
 
 \subsection{Data Visualization (t-SNE)}
 
-We applied t-SNE with perplexity values of 5, 30, 50, and 100. The 2D projection at perplexity=30 (Figure~\ref{fig:tsne_combined}) reveals that Graduate students form a relatively compact region, while Dropout students cluster separately. Enrolled students are scattered between both groups, consistent with their transitional academic status.
-
-Figure~\ref{fig:tsne_perplexity} compares four perplexity values, demonstrating that perplexity=30 provides the clearest cluster separation while avoiding over-fragmentation (low perplexity) or over-smoothing (high perplexity).
+We applied t-SNE to project the high-dimensional feature space into lower dimensions. A systematic pattern analysis across four perplexity values (Figure~\ref{fig:tsne_perplexity}) highlights the algorithm's sensitivity to local versus global structure. At a low perplexity ($p=5$), the projection is severely fragmented, obscuring any meaningful global patterns. Conversely, a high perplexity ($p=100$) over-smooths the manifold, causing a loss of fine-grained local detail while significantly increasing computational overhead.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.8\linewidth]{../data/plots/03_tsne_2d_perplexity_comparison.png}
+\includegraphics[width=0.6\linewidth]{../data/plots/03_tsne_2d_perplexity_comparison.png}
 \caption{t-SNE 2D projections at perplexity = 5, 30, 50, 100.}
 \label{fig:tsne_perplexity}
 \end{figure}
 
-The 3D projection (Figure~\ref{fig:tsne_combined}) provides additional spatial separation, further reducing overlap between Graduate and Dropout clusters, though the Enrolled class remains dispersed.
+Perplexity=30 achieves the optimal balance. The 2D projection (Figure~\ref{fig:tsne_combined}, left) reveals that Graduate students form a relatively compact region, while Dropout students cluster separately. Enrolled students are scattered between both groups, consistent with their transitional academic status. Furthermore, extending the projection from 2D to 3D (Figure~\ref{fig:tsne_combined}, right) provides additional spatial volume, further reducing the apparent overlap between the distinct Graduate and Dropout clusters.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.49\linewidth]{../data/plots/04_tsne_2d_best.png}
-\includegraphics[width=0.49\linewidth]{../data/plots/05_tsne_3d_best.png}
+\includegraphics[width=0.39\linewidth]{../data/plots/04_tsne_2d_best.png}
+\includegraphics[width=0.39\linewidth]{../data/plots/05_tsne_3d_best.png}
 \caption{Left: t-SNE 2D projection (perplexity=30) colored by class. Right: t-SNE 3D projection (perplexity=30) colored by class.}
 \label{fig:tsne_combined}
 \end{figure}
