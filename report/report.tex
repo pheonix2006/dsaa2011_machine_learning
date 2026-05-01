@@ -15,30 +15,35 @@
 \usepackage{xcolor}
 \usepackage{enumitem}
 
+% Editing
+\newcommand{\lh}[1]{{\color{blue}#1}}
+
 \title{Student Dropout Prediction: A Machine Learning Analysis\\
 \large DSAA2011 (L01) Course Project --- HKUST(GZ) 2026 Spring}
 
 \author{
   [GroupID] \quad
-  Member A (XX\%) \quad
-  Member B (XX\%) \quad
-  Member C (XX\%) \quad
-  Member D (XX\%)
+  Member A \quad
+  Member B \quad
+  Member C \quad
+  Member D
 }
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-We analyze the UCI Student Dropout and Academic Success dataset (4,424 samples, 36 features, 3 classes) using a complete machine learning pipeline encompassing data preprocessing, dimensionality reduction, clustering, supervised classification, and model evaluation. Our best-performing model achieves competitive F1-scores through hyperparameter tuning guided by validation curves. We find that academic performance features are the strongest predictors, and the ``Enrolled'' class is consistently the hardest to classify.
+We analyze the UCI Student Dropout and Academic Success dataset using a complete machine learning pipeline encompassing data preprocessing, dimensionality reduction, clustering, supervised classification, and model evaluation. Our best-performing model achieves competitive F1-scores through hyperparameter tuning guided by validation curves. \lh{(Exact score?)} We find that academic performance features are the strongest predictors, and the "Enrolled" class is consistently the hardest to classify.
 \end{abstract}
 
 % ====================
 \section{Introduction}
 
-The Student Dropout and Academic Success dataset from the UCI Machine Learning Repository contains 4,424 instances of students enrolled in various undergraduate programs at a Portuguese higher education institution. Each instance is described by 36 features covering demographics, socioeconomic background, and academic performance across the first and second semesters. The classification target has three categories: \textbf{Dropout} (32.1\%), \textbf{Enrolled} (18.0\%), and \textbf{Graduate} (49.9\%).
+The Student Dropout and Academic Success dataset from the UCI Machine Learning Repository \cite{TODO} contains 4,424 instances of students enrolled in various undergraduate programs at a Portuguese higher education institution. Each instance is described by 36 features covering demographics, socioeconomic background, and academic performance across the first and second semesters.
 
 Our objectives are: (1) explore data structure through visualization and clustering; (2) train and evaluate supervised classifiers; (3) improve models via validation-driven tuning; (4) investigate feature importance and ensemble methods.
+
+\lh{Required: Briefly highlight the findings and main results of your report}
 
 % Our best-performing model, Random Forest with default hyperparameters (\texttt{n\_estimators=100, class\_weight='balanced'}), achieves a macro F1-score of 0.7107 on the held-out test set. A key challenge is the ``Enrolled'' class, which represents only 18\% of the data and is inherently ambiguous. By applying class-balanced weighting, we improve Enrolled class F1 from 0.00--0.52 (unweighted) to 0.47--0.52 (balanced) across all model types. Feature importance analysis confirms that academic performance metrics (approval rates, semester grades) are the dominant predictive signals.
 
@@ -47,14 +52,13 @@ Our objectives are: (1) explore data structure through visualization and cluster
 
 \subsection{Data Preprocessing}
 
-We classified the 36 raw features into four types: \textit{nominal} (8 features, one-hot encoded), \textit{binary} (8 features, kept as 0/1), \textit{continuous} (7 features), and \textit{count} (13 features). 
+The Student Dropout and Academic Success dataset contains 36 raw features that are categorized into four types: \textit{nominal} (8 features, one-hot encoded), \textit{binary} (8 features), \textit{continuous} (7 features), and \textit{count} (13 features). It also includes a three-class target variable: \texttt{Dropout} (32.1\%), \texttt{Enrolled} (18.0\%), and \texttt{Graduate} (49.9\%).
 
-Feature engineering produced 25 additional domain features across six groups: academic ratios, socioeconomic indicators, financial risk flags, demographic categories, macroeconomic indices, and application behavior features. Notably, our subsequent feature importance analysis confirmed that these engineered metrics provided the strongest predictive signals. The top five features overall were all engineered academic ratios: \texttt{overall\_approval\_rate} (importance=0.1002), \texttt{approval\_rate\_2nd} (0.0691), \texttt{total\_approved} (0.0504), \texttt{approval\_rate\_1st} (0.0448), and \texttt{grade\_per\_evaluation\_2nd} (0.0421). Out-of-fold target encoding was used for high-cardinality categorical features to prevent data leakage.
+As stated in the dataset description, anomalies, unexplainable outliers, and missing values have been eliminated by the data provider, so no additional outlier handling or imputation was necessary.
 
 StandardScaler was applied to all 45 numerical features (20 original continuous / count features and the 25 newly engineered domain features) to ensure uniform scale without affecting binary indicators. Feature selection retained the top-50 features by tree-based importance (out of 61 candidates after target encoding).
 
-\textbf{Missing values:} The dataset contains zero missing values across all 4,424 samples and 36 features, so no missing value handling methods were necessary.
-
+Feature engineering produced 25 additional domain features across six groups: academic ratios, socioeconomic indicators, financial risk flags, demographic categories, macroeconomic indices, and application behavior features. Notably, our subsequent feature importance analysis confirmed that these engineered metrics provided the strongest predictive signals. The top five features overall were all engineered academic ratios: \texttt{overall\_approval\_rate} (importance=0.1002), \texttt{approval\_rate\_2nd} (0.0691), \texttt{total\_approved} (0.0504), \texttt{approval\_rate\_1st} (0.0448), and \texttt{grade\_per\_evaluation\_2nd} (0.0421). Out-of-fold target encoding was used for high-cardinality categorical features to prevent data leakage.
 
 \begin{figure}[htbp]
     \centering
@@ -72,8 +76,11 @@ StandardScaler was applied to all 45 numerical features (20 original continuous 
     \end{minipage}
 \end{figure}
 
-\textbf{Exploratory Data Analysis (EDA)} reveals several key patterns:
-\begin{itemize}[noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt]
+\lh{Explain every figure and table in the report, and make sure to reference them in the text.}
+
+We also conducted an Exploratory Data Analysis (EDA) to understand the underlying structure and relationships in the dataset. The EDA reveals several key patterns:
+
+\begin{itemize}
     \item \textbf{Academic performance differences:} Graduate students have notably higher 1st/2nd semester grades than Dropout students, while the initial Admission grade shows less discrimination (Figure~\ref{fig:eda_boxplots}).
     \item \textbf{Age factor:} Dropout students tend to be older, showing a higher median age at enrollment.
     \item \textbf{Strongest predictive signals:} Curricular units approved and semester grade metrics show the strongest correlation with the target variable ($|r| > 0.3$) (Figure~\ref{fig:eda_correlation}).
@@ -87,7 +94,7 @@ StandardScaler was applied to all 45 numerical features (20 original continuous 
 \label{fig:eda_correlation}
 \end{figure}
 
-The data was split 70/15/15 into training (3096), validation (664), and test (664) sets with stratified sampling to preserve class proportions.
+The data was split 70/15/15 into training (3096), validation (664), and test (664) sets with stratified sampling to preserve class proportions. \lh{Maybe move to model training section?}
 
 \subsection{Data Visualization (t-SNE)}
 
