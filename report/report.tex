@@ -52,49 +52,43 @@ Our objectives are: (1) explore data structure through visualization and cluster
 
 \subsection{Data Preprocessing}
 
-The Student Dropout and Academic Success dataset contains 36 raw features that are categorized into four types: \textit{nominal} (8 features, one-hot encoded), \textit{binary} (8 features), \textit{continuous} (7 features), and \textit{count} (13 features). It also includes a three-class target variable: \texttt{Dropout} (32.1\%), \texttt{Enrolled} (18.0\%), and \texttt{Graduate} (49.9\%).
+The dataset contains 36 raw features that are categorized into four types: \textit{nominal} (8 features), \textit{binary} (8 features), \textit{ordinal} (13 features), and \textit{continuous} (7 features). It also includes a three-class target variable: \texttt{Dropout} (32.1\%), \texttt{Enrolled} (18.0\%), and \texttt{Graduate} (49.9\%). We performed a comprehensive data preprocessing pipeline as outlined below.
 
-As stated in the dataset description, anomalies, unexplainable outliers, and missing values have been eliminated by the data provider, so no additional outlier handling or imputation was necessary.
+\paragraph{Missing values and outliers.} As stated in the dataset description, the dataset is clean with no missing values, as confirmed by a complete null value check across all features.
 
-StandardScaler was applied to all 45 numerical features (20 original continuous / count features and the 25 newly engineered domain features) to ensure uniform scale without affecting binary indicators. Feature selection retained the top-50 features by tree-based importance (out of 61 candidates after target encoding).
+\paragraph{EDA for nominal features.} We inspected the distribution and top categories of nominal features. Except for feature \texttt{Course}, most nominal features are heavily skewed and the top four categories can cover over 80\% of the data. This informed our decision to apply out-of-fold (OOF) target encoding for these features, as one-hot encoding would lead to high dimensionality and sparsity.
 
-Feature engineering produced 25 additional domain features across six groups: academic ratios, socioeconomic indicators, financial risk flags, demographic categories, macroeconomic indices, and application behavior features. Notably, our subsequent feature importance analysis confirmed that these engineered metrics provided the strongest predictive signals. The top five features overall were all engineered academic ratios: \texttt{overall\_approval\_rate} (importance=0.1002), \texttt{approval\_rate\_2nd} (0.0691), \texttt{total\_approved} (0.0504), \texttt{approval\_rate\_1st} (0.0448), and \texttt{grade\_per\_evaluation\_2nd} (0.0421). Out-of-fold target encoding was used for high-cardinality categorical features to prevent data leakage.
+\paragraph{EDA for numerical correlations.} We first sorted the 38 numerical features by their absolute Pearson correlation with the target variable. The top 15 features with $|r| \geq 0.09$ along with the target variable were visualized in a correlation heatmap (Figure~\ref{fig:eda_correlation}). 
 
-\begin{figure}[htbp]
-    \centering
-    \begin{minipage}[c]{0.48\textwidth}
-        \centering
-        \includegraphics[width=\linewidth]{../data/plots/01_eda_boxplots.png}
-        \caption{Feature distributions by target class.}
-        \label{fig:eda_boxplots}
-    \end{minipage}\hfill
-    \begin{minipage}[c]{0.48\textwidth}
-        \centering
-        \includegraphics[width=\linewidth]{../data/plots/01_eda_categorical_distribution.png}
-        \caption{Categorical distributions stacked by target.}
-        \label{fig:eda_categorical}
-    \end{minipage}
-\end{figure}
+1. Curricular units between 1st and 2nd, or between grade and admission grade, show strong correlations with each other and with the target variable. These features are likely important predictors of dropout risk.
+2. Economic features (e.g., `tuition fees`, `debtor`, `displaced`) show moderate correlations with each other and with the target variable, suggesting that financial factors may also play a role in dropout risk.
+3. Other factors such as `age`, `gender`, and `scholarship holder` show weaker but notable correlations with the target variable, indicating that demographic factors may also contribute to dropout risk.
 
-\lh{Explain every figure and table in the report, and make sure to reference them in the text.}
-
-We also conducted an Exploratory Data Analysis (EDA) to understand the underlying structure and relationships in the dataset. The EDA reveals several key patterns:
-
-\begin{itemize}
-    \item \textbf{Academic performance differences:} Graduate students have notably higher 1st/2nd semester grades than Dropout students, while the initial Admission grade shows less discrimination (Figure~\ref{fig:eda_boxplots}).
-    \item \textbf{Age factor:} Dropout students tend to be older, showing a higher median age at enrollment.
-    \item \textbf{Strongest predictive signals:} Curricular units approved and semester grade metrics show the strongest correlation with the target variable ($|r| > 0.3$) (Figure~\ref{fig:eda_correlation}).
-    \item \textbf{Demographics and program variations:} Different academic programs (Course) and demographic factors (e.g., Marital Status) exhibit vastly different dropout rates, as illustrated by the stacked distributions in Figure~\ref{fig:eda_categorical}.
-\end{itemize}
-
-\begin{figure}[H]
+\begin{figure}[ptbh]
 \centering
-\includegraphics[width=0.6\linewidth]{../data/plots/01_eda_correlation_heatmap.png}
-\caption{Top-20 feature correlations with the target variable.}
+\includegraphics[width=0.8\linewidth]{../data/plots/01_eda_correlation_heatmap.png}
+\caption{Top-15 feature correlations with the target variable.}
 \label{fig:eda_correlation}
 \end{figure}
 
-The data was split 70/15/15 into training (3096), validation (664), and test (664) sets with stratified sampling to preserve class proportions. \lh{Maybe move to model training section?}
+\paragraph{EDA for visualizing important features.} To gain a better understanding of the curricular units that show strong correlations with the target variable, we visualized the distributions of the four features (1st/2nd semester, grade/approved units) as histograms with trendlines (Figure~\ref{fig:eda_feature_distributions}). These visualizations confirm that higher values in these features are associated with the Graduate class, while lower values are more common among Dropout students. Enrolled students show intermediate distributions, consistent with their transitional academic status.
+
+\begin{figure}[ptbh]
+\centering
+\includegraphics[width=0.8\linewidth]{../data/plots/01_eda_feature_distributions.png}
+\caption{Distributions of top curricular unit features across target classes.}
+\label{fig:eda_feature_distributions}
+\end{figure}
+
+\paragraph{Feature engineering and selection.} We perform feature engineering to create 25 new domain-specific features based on the original 36 features, resulting in a total of 61 candidate features.
+
+\paragraph{Data splitting and target encoding.} The dataset was split into training (70\%), validation (15\%), and test (15\%) sets using stratified sampling to maintain class proportions. Then OOF (Out-of-Fold) target encoding was applied to the nominal features using the training set to compute the mean target value for each category, which was then applied to the validation and test sets. This approach prevents data leakage while allowing us to capture the predictive signal from categorical features.
+
+\paragraph{Feature sandardization, selection, and output.} Finally, we standardized the numerical features to have zero mean and unit variance. We then applied a feature selection method by training a Random Forest classifier on the training set and using its feature importance scores to select the top 40 features for modeling. The final preprocessed datasets were saved for subsequent analysis.
+
+
+\lh{Explain every figure and table in the report, and make sure to reference them in the text.}
+
 
 \subsection{Data Visualization (t-SNE)}
 

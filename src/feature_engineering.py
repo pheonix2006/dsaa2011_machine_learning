@@ -1,5 +1,5 @@
 """
-Feature engineering utilities for Student Dropout and Academic Success dataset.
+Feature engineering utilities
 """
 
 import numpy as np

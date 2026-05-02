@@ -1,5 +1,5 @@
 """
-Data preprocessing utilities for Student Dropout and Academic Success dataset.
+Data preprocessing utilities
 """
 
 import os
@@ -46,12 +46,12 @@ CONTINUOUS_FEATURES = [
 def get_feature_types(df: pd.DataFrame):
     """Classify features into nominal, binary, count, continuous groups."""
     excluded = set(NOMINAL_FEATURES + BINARY_FEATURES + CONTINUOUS_FEATURES)
-    count_features = sorted(set(df.columns) - excluded)
+    ordinal_features = sorted(set(df.columns) - excluded)
 
     return {
         "nominal": [c for c in NOMINAL_FEATURES if c in df.columns],
         "binary": [c for c in BINARY_FEATURES if c in df.columns],
-        "count": count_features,
+        "ordinal": ordinal_features,
         "continuous": [c for c in CONTINUOUS_FEATURES if c in df.columns],
     }
 
@@ -75,92 +75,13 @@ def load_data(data_dir: str = "data"):
 
     return X, y
 
-
-# Missing values
-
-def handle_missing_values(df: pd.DataFrame, strategy: str = "median"):
-    """Fill or drop missing values in the DataFrame."""
-    missing = df.isnull().sum()
-    missing_cols = missing[missing > 0]
-
-    info = {
-        "total_missing": int(missing.sum()),
-        "missing_per_column": missing_cols.to_dict(),
-        "strategy": strategy,
-    }
-
-    if missing.sum() == 0:
-        print("No missing values found.")
-        return df.copy(), info
-
-    print(f"Found {missing.sum()} missing values in {len(missing_cols)} columns: {missing_cols.to_dict()}")
-
-    df_clean = df.copy()
-
-    if strategy == "drop":
-        df_clean = df_clean.dropna()
-        print(f"Dropped rows. New shape: {df_clean.shape}")
-    else:
-        numeric_cols = df_clean.select_dtypes(include=[np.number]).columns
-        fill_value = df_clean[numeric_cols].median() if strategy == "median" else df_clean[numeric_cols].mean()
-        df_clean[numeric_cols] = df_clean[numeric_cols].fillna(fill_value)
-        print(f"Filled missing values with {strategy}.")
-
-    return df_clean, info
-
-
-# Feature encoding
-
-def encode_features(X: pd.DataFrame, feature_types: Optional[dict[str, list[str]]] = None, method: str = "onehot"):
-    """Encode nominal categorical features (one-hot or label)."""
-    if feature_types is None:
-        feature_types = get_feature_types(X)
-
-    nominal_cols = feature_types["nominal"]
-    df = X.copy()
-
-    if not nominal_cols:
-        print("No nominal features to encode.")
-        return df
-
-    if method == "onehot":
-        df = pd.get_dummies(df, columns=nominal_cols, prefix=nominal_cols, dtype=int)
-        print(f"One-hot encoded {len(nominal_cols)} nominal features. New shape: {df.shape}")
-    elif method == "label":
-        le = LabelEncoder()
-        for col in nominal_cols:
-            df[col] = np.asarray(le.fit_transform(df[col].astype(str)), dtype=np.int64)
-        print(f"Label encoded {len(nominal_cols)} nominal features.")
-    else:
-        raise ValueError(f"Unknown encoding method: {method}")
-
-    return df
-
-
 # Standardization
 
-def standardize_features(X: pd.DataFrame, feature_types: Optional[dict[str, list[str]]] = None, fit: bool = True, scaler: Optional[StandardScaler] = None):
+def standardize_features(X: pd.DataFrame, scaler: Optional[StandardScaler] = None):
     """Standardize continuous and count features to zero mean, unit variance."""
-    if feature_types is None:
-        feature_types = get_feature_types(X)
-
-    scale_cols = feature_types["continuous"] + feature_types["count"]
-    scale_cols = [c for c in scale_cols if c in X.columns]
-
-    if not scale_cols:
-        print("No numerical features to standardize.")
-        return X.copy(), scaler or StandardScaler()
-
     df = X.copy()
-
-    if fit:
-        scaler = StandardScaler()
-        df[scale_cols] = scaler.fit_transform(df[scale_cols])
-        print(f"Standardized {len(scale_cols)} numerical features (fit).")
-    else:
-        if scaler is None:
-            raise ValueError("scaler must be provided when fit=False")
-        df[scale_cols] = scaler.transform(df[scale_cols])
-        print(f"Standardized {len(scale_cols)} numerical features (transform).")
-
-    return df, scaler
+    scaler = StandardScaler()
+    arr = scaler.fit_transform(df)
+    df_scaled = pd.DataFrame(arr, columns=df.columns, index=df.index)
+    print(f"Standardized {df_scaled.shape[1]} numerical features (fit).")
+    return df_scaled, scaler
