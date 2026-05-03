@@ -180,51 +180,12 @@ def plot_algorithm_comparison(all_results: dict[str, dict[str, float]], y_true: 
 
     return fig
 
-
-def plot_cluster_size_distribution(labels: np.ndarray, title: str, save_path: Optional[str] = None):
-    """Plot bar chart of cluster sizes."""
-    fig, ax = plt.subplots(figsize=(10, 6))
-    unique, counts = np.unique(labels, return_counts=True)
-
-    # Sort by count descending
-    sorted_idx = np.argsort(-counts)
-    unique, counts = unique[sorted_idx], counts[sorted_idx]
-
-    # Assign colors
-    colors = [CLUSTER_COLORS[u % len(CLUSTER_COLORS)] for u in unique]
-
-    bars = ax.bar([str(u) for u in unique], counts, color=colors, edgecolor="white")
-    ax.set_xlabel("Cluster ID")
-    ax.set_ylabel("Number of Samples")
-    ax.set_title(title, fontweight="bold")
-
-    # Annotate bars with count and percentage
-    for bar, count in zip(bars, counts):
-        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 20,
-                f"{count}\n({count / len(labels) * 100:.1f}%)", ha="center", va="bottom", fontsize=9)
-
-    ax.grid(True, alpha=0.3, axis="y")
-    plt.tight_layout()
-
-    if save_path:
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        plt.savefig(save_path, dpi=150, bbox_inches="tight")
-        print(f"Plot saved to {save_path}")
-
-    return fig
-
-
 def compare_clusters_to_classes(labels: np.ndarray, y_true: np.ndarray):
     """Create cross-tabulation of clusters vs true class labels."""
     return pd.crosstab(pd.Series(labels, name="Cluster"), pd.Series(y_true, name="True Class"))
 
 
-def plot_dendrogram(
-    X: np.ndarray,
-    method: str = "ward",
-    max_d: Optional[float] = None,
-    save_path: Optional[str] = None,
-) -> plt.Figure:
+def plot_dendrogram(X: np.ndarray, method: str = "ward", max_d: Optional[float] = None, save_path: Optional[str] = None):
     """Plot hierarchical clustering dendrogram."""
     Z = linkage(X, method=method)
     fig, ax = plt.subplots(figsize=(14, 7))
@@ -251,36 +212,3 @@ def plot_dendrogram(
         print(f"Plot saved to {save_path}")
 
     return fig
-
-
-def rank_algorithms(all_results: dict[str, dict[str, float]]) -> list[tuple[str, float]]:
-    """Rank clustering algorithms by normalized composite score.
-
-    Metrics are min-max normalized to [0,1], DB Index inverted (lower=better),
-    then summed with equal weights.
-    """
-    metrics_keys = ["silhouette", "calinski_harabasz", "davies_bouldin",
-                    "adjusted_rand_index", "normalized_mutual_info"]
-
-    present_keys = [k for k in metrics_keys
-                    if all(k in v for v in all_results.values())]
-    if not present_keys:
-        return [(name, 0.0) for name in all_results]
-
-    raw = {name: {k: res[k] for k in present_keys} for name, res in all_results.items()}
-
-    normalized: dict[str, dict[str, float]] = {name: {} for name in raw}
-    for key in present_keys:
-        values = [raw[name][key] for name in raw]
-        vmin, vmax = min(values), max(values)
-        span = vmax - vmin if vmax != vmin else 1.0
-        for name in raw:
-            norm_val = (raw[name][key] - vmin) / span
-            if key == "davies_bouldin":
-                norm_val = 1.0 - norm_val
-            normalized[name][key] = norm_val
-
-    scores: dict[str, float] = {name: sum(normalized[name].values()) for name in normalized}
-
-    ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-    return ranked
