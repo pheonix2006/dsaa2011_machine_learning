@@ -1,0 +1,4 @@
+model,point_estimate,ci_lower_95,ci_upper_95
+Tuned_RF,0.7096,0.6723,0.7449
+LR_baseline,0.7027,0.6666,0.7373
+Difference_RF_minus_LR,0.0069,-0.0181,0.0323

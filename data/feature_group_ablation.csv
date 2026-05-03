@@ -1,0 +1,4 @@
+feature_group,n_features,mean_f1,std_f1
+Academic,20,0.6712,0.0128
+Socioeconomic,20,0.5604,0.0244
+All top-40,40,0.7173,0.0094

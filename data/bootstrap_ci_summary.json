@@ -1,0 +1,26 @@
+{
+  "rf_f1": {
+    "point": 0.7096,
+    "ci_95": [
+      0.6723,
+      0.7449
+    ]
+  },
+  "lr_f1": {
+    "point": 0.7027,
+    "ci_95": [
+      0.6666,
+      0.7373
+    ]
+  },
+  "difference": {
+    "point": 0.0069,
+    "ci_95": [
+      -0.0181,
+      0.0323
+    ]
+  },
+  "p_value_lr_ge_rf": 0.3009,
+  "n_bootstrap": 10000,
+  "interpretation": "No statistically significant difference between RF and LR at the 95% level (CI for difference spans zero: [-0.0181, 0.0323], p=0.3009). The observed difference of +0.0069 could be due to sampling variability."
+}

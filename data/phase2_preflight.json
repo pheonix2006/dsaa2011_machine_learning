@@ -1,0 +1,94 @@
+{
+  "environment": {
+    "python": "3.11.13 (main, Jun 12 2025, 12:41:34) [MSC v.1943 64 bit (AMD64)]",
+    "nbformat": "5.10.4",
+    "nbclient": "0.10.4",
+    "pandas": "3.0.2",
+    "numpy": "2.4.4",
+    "sklearn": "1.8.0",
+    "matplotlib": "3.10.8",
+    "seaborn": "0.13.2"
+  },
+  "splits": {
+    "train": {
+      "features_shape": [
+        3096,
+        40
+      ],
+      "target_shape": [
+        3096
+      ],
+      "target_distribution": {
+        "0": 995,
+        "1": 556,
+        "2": 1545
+      }
+    },
+    "val": {
+      "features_shape": [
+        664,
+        40
+      ],
+      "target_shape": [
+        664
+      ],
+      "target_distribution": {
+        "0": 213,
+        "1": 119,
+        "2": 332
+      }
+    },
+    "test": {
+      "features_shape": [
+        664,
+        40
+      ],
+      "target_shape": [
+        664
+      ],
+      "target_distribution": {
+        "0": 213,
+        "1": 119,
+        "2": 332
+      }
+    }
+  },
+  "input_files": {
+    "features_engineered_train": {
+      "path": "data/features_engineered_train.csv",
+      "size_bytes": 1003229,
+      "mtime_iso": "2026-05-02T20:17:37.6784487+08:00",
+      "sha256": "255b125aeafd69d63e9d33405c2d306b59527bc917e878386bf058963df10b6f"
+    },
+    "features_engineered_val": {
+      "path": "data/features_engineered_val.csv",
+      "size_bytes": 216561,
+      "mtime_iso": "2026-05-02T20:17:37.6795730+08:00",
+      "sha256": "3d468a5f2e8a8747022d99cfaf2e258f8cf66584a2de75c987a1c664c7ab3cbb"
+    },
+    "features_engineered_test": {
+      "path": "data/features_engineered_test.csv",
+      "size_bytes": 216537,
+      "mtime_iso": "2026-05-02T20:17:37.6728675+08:00",
+      "sha256": "17793bdac914ce439a3ba07c450e1ab350865305b25ce66f383cae11195e5266"
+    },
+    "targets_engineered_train": {
+      "path": "data/targets_engineered_train.csv",
+      "size_bytes": 9296,
+      "mtime_iso": "2026-05-02T20:17:37.7095636+08:00",
+      "sha256": "6cf5210bf3e9815801e72b11f9babdddf1e0f320c75228e6ffd863cf6949e936"
+    },
+    "targets_engineered_val": {
+      "path": "data/targets_engineered_val.csv",
+      "size_bytes": 2000,
+      "mtime_iso": "2026-05-02T20:17:37.7095636+08:00",
+      "sha256": "08d532a54c760860bfacbd7b930ba8f7001c2ba5ea987a78035ff82a19f1bd80"
+    },
+    "targets_engineered_test": {
+      "path": "data/targets_engineered_test.csv",
+      "size_bytes": 2000,
+      "mtime_iso": "2026-05-02T20:17:37.7071695+08:00",
+      "sha256": "5c331daed961a9257aa758d3069b954155f9ae01a9b8b37c3bd3070f54b72e39"
+    }
+  }
+}

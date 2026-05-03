@@ -1,0 +1,17 @@
+{
+  "n_original_features": 40,
+  "n_interactions": 45,
+  "n_total_features": 85,
+  "top_interaction_base_features": [
+    "approval_rate_2nd",
+    "overall_approval_rate",
+    "approval_rate_1st",
+    "grade_per_evaluation_2nd",
+    "total_approved",
+    "Curricular units 2nd sem (approved)",
+    "Curricular units 2nd sem (grade)",
+    "grade_per_evaluation_1st",
+    "Course",
+    "Admission grade"
+  ]
+}

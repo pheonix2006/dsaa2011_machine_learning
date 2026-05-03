@@ -1,0 +1,850 @@
+{
+  "phase": "Phase 2 Reproduction",
+  "date": "2026-05-03",
+  "source_files": {
+    "preflight": "data/phase2_preflight.json",
+    "task4_models": "data/model_comparison_task4.csv",
+    "evaluation_baseline": "data/model_evaluation_baseline_metrics.csv",
+    "evaluation_auc": "data/model_evaluation_auc.csv",
+    "evaluation_cv": "data/model_evaluation_cv.csv",
+    "evaluation_tuned": "data/model_evaluation_tuned_metrics.csv",
+    "tuned_params": "data/model_evaluation_tuned_params.json",
+    "ensemble_metrics": "data/ensemble_metrics.csv",
+    "class_weight_impact": "data/class_weight_impact.csv",
+    "cv_all_models": "data/cv_comparison_all_models.csv",
+    "feature_importance_top": "data/feature_importance_top.csv",
+    "feature_selection": "data/feature_selection_impact.csv",
+    "model_comparison_all": "data/model_comparison_all.csv",
+    "interaction_summary": "data/interaction_experiment_summary.json"
+  },
+  "preflight": {
+    "environment": {
+      "python": "3.11.13 (main, Jun 12 2025, 12:41:34) [MSC v.1943 64 bit (AMD64)]",
+      "nbformat": "5.10.4",
+      "nbclient": "0.10.4",
+      "pandas": "3.0.2",
+      "numpy": "2.4.4",
+      "sklearn": "1.8.0",
+      "matplotlib": "3.10.8",
+      "seaborn": "0.13.2"
+    },
+    "splits": {
+      "train": {
+        "features_shape": [
+          3096,
+          40
+        ],
+        "target_shape": [
+          3096
+        ],
+        "target_distribution": {
+          "0": 995,
+          "1": 556,
+          "2": 1545
+        }
+      },
+      "val": {
+        "features_shape": [
+          664,
+          40
+        ],
+        "target_shape": [
+          664
+        ],
+        "target_distribution": {
+          "0": 213,
+          "1": 119,
+          "2": 332
+        }
+      },
+      "test": {
+        "features_shape": [
+          664,
+          40
+        ],
+        "target_shape": [
+          664
+        ],
+        "target_distribution": {
+          "0": 213,
+          "1": 119,
+          "2": 332
+        }
+      }
+    },
+    "input_files": {
+      "features_engineered_train": {
+        "path": "data/features_engineered_train.csv",
+        "size_bytes": 1003229,
+        "mtime_iso": "2026-05-02T20:17:37.6784487+08:00",
+        "sha256": "255b125aeafd69d63e9d33405c2d306b59527bc917e878386bf058963df10b6f"
+      },
+      "features_engineered_val": {
+        "path": "data/features_engineered_val.csv",
+        "size_bytes": 216561,
+        "mtime_iso": "2026-05-02T20:17:37.6795730+08:00",
+        "sha256": "3d468a5f2e8a8747022d99cfaf2e258f8cf66584a2de75c987a1c664c7ab3cbb"
+      },
+      "features_engineered_test": {
+        "path": "data/features_engineered_test.csv",
+        "size_bytes": 216537,
+        "mtime_iso": "2026-05-02T20:17:37.6728675+08:00",
+        "sha256": "17793bdac914ce439a3ba07c450e1ab350865305b25ce66f383cae11195e5266"
+      },
+      "targets_engineered_train": {
+        "path": "data/targets_engineered_train.csv",
+        "size_bytes": 9296,
+        "mtime_iso": "2026-05-02T20:17:37.7095636+08:00",
+        "sha256": "6cf5210bf3e9815801e72b11f9babdddf1e0f320c75228e6ffd863cf6949e936"
+      },
+      "targets_engineered_val": {
+        "path": "data/targets_engineered_val.csv",
+        "size_bytes": 2000,
+        "mtime_iso": "2026-05-02T20:17:37.7095636+08:00",
+        "sha256": "08d532a54c760860bfacbd7b930ba8f7001c2ba5ea987a78035ff82a19f1bd80"
+      },
+      "targets_engineered_test": {
+        "path": "data/targets_engineered_test.csv",
+        "size_bytes": 2000,
+        "mtime_iso": "2026-05-02T20:17:37.7071695+08:00",
+        "sha256": "5c331daed961a9257aa758d3069b954155f9ae01a9b8b37c3bd3070f54b72e39"
+      }
+    }
+  },
+  "task4_models": [
+    {
+      "model": "Decision Tree",
+      "train_accuracy": 0.9047157622739018,
+      "val_accuracy": 0.7093373493975904,
+      "test_accuracy": 0.713855421686747,
+      "entire_accuracy": 0.846745027124774,
+      "train_f1_macro": 0.8875718185069915,
+      "val_f1_macro": 0.6692880794739273,
+      "test_f1_macro": 0.6768912763378094,
+      "entire_f1_macro": 0.8213020508124366
+    },
+    {
+      "model": "Logistic Regression",
+      "train_accuracy": 0.7538759689922481,
+      "val_accuracy": 0.7484939759036144,
+      "test_accuracy": 0.7409638554216867,
+      "entire_accuracy": 0.7511301989150091,
+      "train_f1_macro": 0.715568630948968,
+      "val_f1_macro": 0.706987080117126,
+      "test_f1_macro": 0.7078774289292559,
+      "entire_f1_macro": 0.7131967904648069
+    },
+    {
+      "model": "SVM (RBF)",
+      "train_accuracy": 0.685077519379845,
+      "val_accuracy": 0.6656626506024096,
+      "test_accuracy": 0.6867469879518072,
+      "entire_accuracy": 0.6824141048824593,
+      "train_f1_macro": 0.6393620347865249,
+      "val_f1_macro": 0.6165617526634,
+      "test_f1_macro": 0.644885885011962,
+      "entire_f1_macro": 0.6368359211507969
+    }
+  ],
+  "evaluation_baseline": [
+    {
+      "model": "Decision Tree",
+      "set": "test",
+      "accuracy": 0.713855421686747,
+      "precision_macro": 0.68705693254917,
+      "precision_weighted": 0.7586977088513239,
+      "recall_macro": 0.6923641225255303,
+      "recall_weighted": 0.713855421686747,
+      "f1_macro": 0.6768912763378094,
+      "f1_weighted": 0.727623030389265
+    },
+    {
+      "model": "Logistic Regression",
+      "set": "test",
+      "accuracy": 0.7409638554216867,
+      "precision_macro": 0.7192415624474555,
+      "precision_weighted": 0.7879760265776539,
+      "recall_macro": 0.7237950500071061,
+      "recall_weighted": 0.7409638554216867,
+      "f1_macro": 0.7078774289292559,
+      "f1_weighted": 0.7552550014654663
+    },
+    {
+      "model": "SVM (RBF)",
+      "set": "test",
+      "accuracy": 0.6867469879518072,
+      "precision_macro": 0.6886211475987691,
+      "precision_weighted": 0.7603697671591795,
+      "recall_macro": 0.6621800255822675,
+      "recall_weighted": 0.6867469879518072,
+      "f1_macro": 0.644885885011962,
+      "f1_weighted": 0.7004991080642146
+    }
+  ],
+  "evaluation_auc": [
+    {
+      "model": "Decision Tree",
+      "class": "Dropout",
+      "auc": 0.8002196475229797
+    },
+    {
+      "model": "Decision Tree",
+      "class": "Enrolled",
+      "auc": 0.703723691311387
+    },
+    {
+      "model": "Decision Tree",
+      "class": "Graduate",
+      "auc": 0.8488895340397735
+    },
+    {
+      "model": "Decision Tree",
+      "class": "macro",
+      "auc": 0.7842776242913801
+    },
+    {
+      "model": "Logistic Regression",
+      "class": "Dropout",
+      "auc": 0.9126094333926694
+    },
+    {
+      "model": "Logistic Regression",
+      "class": "Enrolled",
+      "auc": 0.8250096368822758
+    },
+    {
+      "model": "Logistic Regression",
+      "class": "Graduate",
+      "auc": 0.9313307446654088
+    },
+    {
+      "model": "Logistic Regression",
+      "class": "macro",
+      "auc": 0.8896499383134513
+    },
+    {
+      "model": "SVM (RBF)",
+      "class": "Dropout",
+      "auc": 0.8953915659515109
+    },
+    {
+      "model": "SVM (RBF)",
+      "class": "Enrolled",
+      "auc": 0.7964844653457713
+    },
+    {
+      "model": "SVM (RBF)",
+      "class": "Graduate",
+      "auc": 0.9070710553055596
+    },
+    {
+      "model": "SVM (RBF)",
+      "class": "macro",
+      "auc": 0.8663156955342806
+    }
+  ],
+  "evaluation_cv": [
+    {
+      "model": "Decision Tree",
+      "cv": 5,
+      "scoring": "f1_macro",
+      "mean_f1_macro": 0.6473449873455531,
+      "std_f1_macro": 0.0162975862164086,
+      "fold_1": 0.6709021939997162,
+      "fold_2": 0.6342295764488551,
+      "fold_3": 0.6627700231894154,
+      "fold_4": 0.6306285585433226,
+      "fold_5": 0.6381945845464564
+    },
+    {
+      "model": "Logistic Regression",
+      "cv": 5,
+      "scoring": "f1_macro",
+      "mean_f1_macro": 0.7050868008880865,
+      "std_f1_macro": 0.0054545419614662,
+      "fold_1": 0.6990866824445003,
+      "fold_2": 0.6996438628152184,
+      "fold_3": 0.7136426843359654,
+      "fold_4": 0.7048330191495471,
+      "fold_5": 0.7082277556952014
+    },
+    {
+      "model": "SVM (RBF)",
+      "cv": 5,
+      "scoring": "f1_macro",
+      "mean_f1_macro": 0.633120972747941,
+      "std_f1_macro": 0.0142448200741511,
+      "fold_1": 0.647525097923044,
+      "fold_2": 0.6429404169299296,
+      "fold_3": 0.6067512810816875,
+      "fold_4": 0.636744585760968,
+      "fold_5": 0.6316434820440756
+    }
+  ],
+  "evaluation_tuned": [
+    {
+      "model": "Decision Tree",
+      "baseline_test_accuracy": 0.713855421686747,
+      "baseline_test_f1_macro": 0.6768912763378094,
+      "tuned_test_accuracy": 0.6957831325301205,
+      "tuned_test_f1_macro": 0.6730962003429716,
+      "improvement_f1_macro": -0.0037950759948378,
+      "best_cv_f1_macro": 0.6838930424391282
+    },
+    {
+      "model": "Logistic Regression",
+      "baseline_test_accuracy": 0.7409638554216867,
+      "baseline_test_f1_macro": 0.7078774289292559,
+      "tuned_test_accuracy": 0.7379518072289156,
+      "tuned_test_f1_macro": 0.7037335479578696,
+      "improvement_f1_macro": -0.0041438809713862,
+      "best_cv_f1_macro": 0.7054284459440657
+    },
+    {
+      "model": "SVM (RBF)",
+      "baseline_test_accuracy": 0.6867469879518072,
+      "baseline_test_f1_macro": 0.644885885011962,
+      "tuned_test_accuracy": 0.7153614457831325,
+      "tuned_test_f1_macro": 0.6808150244790819,
+      "improvement_f1_macro": 0.0359291394671199,
+      "best_cv_f1_macro": 0.6744625823205653
+    }
+  ],
+  "tuned_params": {
+    "Decision Tree": {
+      "best_params": {
+        "class_weight": "balanced",
+        "max_depth": 5,
+        "min_samples_leaf": 1,
+        "min_samples_split": 2
+      },
+      "best_cv_f1_macro": 0.6838930424391282
+    },
+    "Logistic Regression": {
+      "best_params": {
+        "C": 1,
+        "class_weight": "balanced",
+        "max_iter": 50000,
+        "penalty": "l1",
+        "solver": "saga"
+      },
+      "best_cv_f1_macro": 0.7054284459440657
+    },
+    "SVM (RBF)": {
+      "best_params": {
+        "C": 100,
+        "class_weight": "balanced",
+        "gamma": "scale"
+      },
+      "best_cv_f1_macro": 0.6744625823205653
+    }
+  },
+  "ensemble_metrics": [
+    {
+      "Model": "RF (default)",
+      "accuracy": 0.7695783132530121,
+      "precision_macro": 0.7145638661917731,
+      "precision_weighted": 0.7530747376684614,
+      "recall_macro": 0.6805229756363205,
+      "recall_weighted": 0.7695783132530121,
+      "f1_macro": 0.6881296221931802,
+      "f1_weighted": 0.7552352090507969
+    },
+    {
+      "Model": "GradientBoosting (default)",
+      "accuracy": 0.7575301204819277,
+      "precision_macro": 0.694630066532683,
+      "precision_weighted": 0.7552408805253314,
+      "recall_macro": 0.6883324912067886,
+      "recall_weighted": 0.7575301204819277,
+      "f1_macro": 0.6910177235284438,
+      "f1_weighted": 0.7558584131801578
+    },
+    {
+      "Model": "RF (tuned)",
+      "accuracy": 0.7515060240963856,
+      "precision_macro": 0.715114515837525,
+      "precision_weighted": 0.7761980710033399,
+      "recall_macro": 0.7163320104895853,
+      "recall_weighted": 0.7515060240963856,
+      "f1_macro": 0.7096248823134573,
+      "f1_weighted": 0.7596652850057695
+    },
+    {
+      "Model": "GradientBoosting (tuned)",
+      "accuracy": 0.7725903614457831,
+      "precision_macro": 0.7130622153124403,
+      "precision_weighted": 0.7623874517791319,
+      "recall_macro": 0.6964612305694947,
+      "recall_weighted": 0.7725903614457831,
+      "f1_macro": 0.7026796646025725,
+      "f1_weighted": 0.7657369869591389
+    }
+  ],
+  "class_weight_impact": [
+    {
+      "model": "DT",
+      "enrolled_f1_no_weight": 0.4033613445378151,
+      "enrolled_f1_balanced": 0.5032258064516129,
+      "change": 0.0998644619137977
+    },
+    {
+      "model": "LR",
+      "enrolled_f1_no_weight": 0.4593301435406698,
+      "enrolled_f1_balanced": 0.5290322580645161,
+      "change": 0.0697021145238462
+    },
+    {
+      "model": "SVM",
+      "enrolled_f1_no_weight": 0.0,
+      "enrolled_f1_balanced": 0.4747774480712166,
+      "change": 0.4747774480712166
+    }
+  ],
+  "cv_all_models": [
+    {
+      "model": "Decision Tree",
+      "mean_f1_macro": 0.6532980087994302,
+      "std_f1_macro": 0.0117489621547643,
+      "fold_1_f1_macro": 0.632943982824123,
+      "fold_2_f1_macro": 0.6622117924840398,
+      "fold_3_f1_macro": 0.661493131160014,
+      "fold_4_f1_macro": 0.6627953136303727,
+      "fold_5_f1_macro": 0.6470458238986013
+    },
+    {
+      "model": "Logistic Regression",
+      "mean_f1_macro": 0.7028088377466348,
+      "std_f1_macro": 0.0073491922082185,
+      "fold_1_f1_macro": 0.7068594776400617,
+      "fold_2_f1_macro": 0.6894656343323745,
+      "fold_3_f1_macro": 0.7029991927566991,
+      "fold_4_f1_macro": 0.7114917112810049,
+      "fold_5_f1_macro": 0.7032281727230338
+    },
+    {
+      "model": "SVM (RBF)",
+      "mean_f1_macro": 0.6341516673829929,
+      "std_f1_macro": 0.015269926645499,
+      "fold_1_f1_macro": 0.6511998939905917,
+      "fold_2_f1_macro": 0.6201965785091245,
+      "fold_3_f1_macro": 0.6458176092103299,
+      "fold_4_f1_macro": 0.6120164956371853,
+      "fold_5_f1_macro": 0.641527759567733
+    },
+    {
+      "model": "Random Forest",
+      "mean_f1_macro": 0.7108485132672692,
+      "std_f1_macro": 0.0187264122598863,
+      "fold_1_f1_macro": 0.713496822169867,
+      "fold_2_f1_macro": 0.6829692322830415,
+      "fold_3_f1_macro": 0.7374697032007737,
+      "fold_4_f1_macro": 0.7215435453870227,
+      "fold_5_f1_macro": 0.698763263295641
+    },
+    {
+      "model": "Gradient Boosting",
+      "mean_f1_macro": 0.7057467661743315,
+      "std_f1_macro": 0.0096020502092541,
+      "fold_1_f1_macro": 0.7119268766201228,
+      "fold_2_f1_macro": 0.698986747574205,
+      "fold_3_f1_macro": 0.7153098399727612,
+      "fold_4_f1_macro": 0.7123300244694318,
+      "fold_5_f1_macro": 0.6901803422351368
+    }
+  ],
+  "feature_importance_top": [
+    {
+      "model": "Random Forest (tuned)",
+      "rank": 1,
+      "feature": "overall_approval_rate",
+      "importance": 0.1119751909669082
+    },
+    {
+      "model": "Random Forest (tuned)",
+      "rank": 2,
+      "feature": "approval_rate_2nd",
+      "importance": 0.1016543527323182
+    },
+    {
+      "model": "Random Forest (tuned)",
+      "rank": 3,
+      "feature": "Curricular units 2nd sem (approved)",
+      "importance": 0.0640559172723957
+    },
+    {
+      "model": "Random Forest (tuned)",
+      "rank": 4,
+      "feature": "total_approved",
+      "importance": 0.0564248270340121
+    },
+    {
+      "model": "Random Forest (tuned)",
+      "rank": 5,
+      "feature": "approval_rate_1st",
+      "importance": 0.0530172403816309
+    },
+    {
+      "model": "Random Forest (tuned)",
+      "rank": 6,
+      "feature": "grade_per_evaluation_2nd",
+      "importance": 0.0484758136930683
+    },
+    {
+      "model": "Random Forest (tuned)",
+      "rank": 7,
+      "feature": "Curricular units 2nd sem (grade)",
+      "importance": 0.0453283753530933
+    },
+    {
+      "model": "Random Forest (tuned)",
+      "rank": 8,
+      "feature": "Tuition fees up to date",
+      "importance": 0.0399483157371586
+    },
+    {
+      "model": "Random Forest (tuned)",
+      "rank": 9,
+      "feature": "grade_per_evaluation_1st",
+      "importance": 0.0297473810540331
+    },
+    {
+      "model": "Random Forest (tuned)",
+      "rank": 10,
+      "feature": "evaluation_intensity_2nd",
+      "importance": 0.0281287656281856
+    },
+    {
+      "model": "Random Forest (tuned)",
+      "rank": 11,
+      "feature": "Curricular units 1st sem (grade)",
+      "importance": 0.02768438079203
+    },
+    {
+      "model": "Random Forest (tuned)",
+      "rank": 12,
+      "feature": "Course",
+      "importance": 0.0252964499170996
+    },
+    {
+      "model": "Random Forest (tuned)",
+      "rank": 13,
+      "feature": "Age at enrollment",
+      "importance": 0.0242057528035817
+    },
+    {
+      "model": "Random Forest (tuned)",
+      "rank": 14,
+      "feature": "Curricular units 1st sem (approved)",
+      "importance": 0.0225688964327607
+    },
+    {
+      "model": "Random Forest (tuned)",
+      "rank": 15,
+      "feature": "Admission grade",
+      "importance": 0.0197575341732292
+    },
+    {
+      "model": "Random Forest (tuned)",
+      "rank": 16,
+      "feature": "Application mode",
+      "importance": 0.0185493475882158
+    },
+    {
+      "model": "Random Forest (tuned)",
+      "rank": 17,
+      "feature": "Mother's occupation",
+      "importance": 0.0182832574915729
+    },
+    {
+      "model": "Random Forest (tuned)",
+      "rank": 18,
+      "feature": "evaluation_intensity_1st",
+      "importance": 0.0180820035710321
+    },
+    {
+      "model": "Random Forest (tuned)",
+      "rank": 19,
+      "feature": "Father's occupation",
+      "importance": 0.0175359802105245
+    },
+    {
+      "model": "Random Forest (tuned)",
+      "rank": 20,
+      "feature": "grade_improvement",
+      "importance": 0.0173749593008245
+    },
+    {
+      "model": "GradientBoosting (tuned)",
+      "rank": 1,
+      "feature": "overall_approval_rate",
+      "importance": 0.465097049359172
+    },
+    {
+      "model": "GradientBoosting (tuned)",
+      "rank": 2,
+      "feature": "approval_rate_2nd",
+      "importance": 0.137900118781088
+    },
+    {
+      "model": "GradientBoosting (tuned)",
+      "rank": 3,
+      "feature": "Tuition fees up to date",
+      "importance": 0.0599569339397102
+    },
+    {
+      "model": "GradientBoosting (tuned)",
+      "rank": 4,
+      "feature": "evaluation_intensity_2nd",
+      "importance": 0.0393796909960799
+    },
+    {
+      "model": "GradientBoosting (tuned)",
+      "rank": 5,
+      "feature": "Course",
+      "importance": 0.0335067746460444
+    },
+    {
+      "model": "GradientBoosting (tuned)",
+      "rank": 6,
+      "feature": "Age at enrollment",
+      "importance": 0.0185642835204768
+    },
+    {
+      "model": "GradientBoosting (tuned)",
+      "rank": 7,
+      "feature": "grade_per_evaluation_2nd",
+      "importance": 0.0166601822755394
+    },
+    {
+      "model": "GradientBoosting (tuned)",
+      "rank": 8,
+      "feature": "Mother's occupation",
+      "importance": 0.0164004096569044
+    },
+    {
+      "model": "GradientBoosting (tuned)",
+      "rank": 9,
+      "feature": "Admission grade",
+      "importance": 0.0146371153937638
+    },
+    {
+      "model": "GradientBoosting (tuned)",
+      "rank": 10,
+      "feature": "total_enrolled",
+      "importance": 0.0135032015717133
+    },
+    {
+      "model": "GradientBoosting (tuned)",
+      "rank": 11,
+      "feature": "Curricular units 2nd sem (grade)",
+      "importance": 0.0134626987050529
+    },
+    {
+      "model": "GradientBoosting (tuned)",
+      "rank": 12,
+      "feature": "Curricular units 1st sem (enrolled)",
+      "importance": 0.0132031069117299
+    },
+    {
+      "model": "GradientBoosting (tuned)",
+      "rank": 13,
+      "feature": "grade_improvement",
+      "importance": 0.0119384415693112
+    },
+    {
+      "model": "GradientBoosting (tuned)",
+      "rank": 14,
+      "feature": "Previous qualification (grade)",
+      "importance": 0.01092745933635
+    },
+    {
+      "model": "GradientBoosting (tuned)",
+      "rank": 15,
+      "feature": "no_financial_stress",
+      "importance": 0.0101769302908208
+    },
+    {
+      "model": "GradientBoosting (tuned)",
+      "rank": 16,
+      "feature": "Curricular units 2nd sem (enrolled)",
+      "importance": 0.0093368782230879
+    },
+    {
+      "model": "GradientBoosting (tuned)",
+      "rank": 17,
+      "feature": "Father's qualification",
+      "importance": 0.0086675658958329
+    },
+    {
+      "model": "GradientBoosting (tuned)",
+      "rank": 18,
+      "feature": "evaluation_intensity_1st",
+      "importance": 0.0082801650757521
+    },
+    {
+      "model": "GradientBoosting (tuned)",
+      "rank": 19,
+      "feature": "GDP",
+      "importance": 0.0079323218858918
+    },
+    {
+      "model": "GradientBoosting (tuned)",
+      "rank": 20,
+      "feature": "Father's occupation",
+      "importance": 0.0077600033712082
+    }
+  ],
+  "feature_selection": [
+    {
+      "k": 10,
+      "mean_f1": 0.6554245033862569,
+      "std_f1": 0.0086134043807785
+    },
+    {
+      "k": 20,
+      "mean_f1": 0.6920477401052467,
+      "std_f1": 0.0232321926174139
+    },
+    {
+      "k": 30,
+      "mean_f1": 0.6878625264820234,
+      "std_f1": 0.0135154857361006
+    },
+    {
+      "k": 40,
+      "mean_f1": 0.6991690347701801,
+      "std_f1": 0.0177316558676992
+    }
+  ],
+  "model_comparison_all": [
+    {
+      "Model": "Decision Tree",
+      "accuracy": 0.713855421686747,
+      "precision_macro": 0.68705693254917,
+      "precision_weighted": 0.7586977088513239,
+      "recall_macro": 0.6923641225255303,
+      "recall_weighted": 0.713855421686747,
+      "f1_macro": 0.6768912763378094,
+      "f1_weighted": 0.727623030389265
+    },
+    {
+      "Model": "Logistic Regression",
+      "accuracy": 0.7409638554216867,
+      "precision_macro": 0.7192415624474555,
+      "precision_weighted": 0.7879760265776539,
+      "recall_macro": 0.7237950500071061,
+      "recall_weighted": 0.7409638554216867,
+      "f1_macro": 0.7078774289292559,
+      "f1_weighted": 0.7552550014654663
+    },
+    {
+      "Model": "SVM (RBF)",
+      "accuracy": 0.6867469879518072,
+      "precision_macro": 0.6886211475987691,
+      "precision_weighted": 0.7603697671591795,
+      "recall_macro": 0.6621800255822675,
+      "recall_weighted": 0.6867469879518072,
+      "f1_macro": 0.644885885011962,
+      "f1_weighted": 0.7004991080642146
+    },
+    {
+      "Model": "RF (default)",
+      "accuracy": 0.7695783132530121,
+      "precision_macro": 0.7145638661917731,
+      "precision_weighted": 0.7530747376684614,
+      "recall_macro": 0.6805229756363205,
+      "recall_weighted": 0.7695783132530121,
+      "f1_macro": 0.6881296221931802,
+      "f1_weighted": 0.7552352090507969
+    },
+    {
+      "Model": "GradientBoosting (default)",
+      "accuracy": 0.7575301204819277,
+      "precision_macro": 0.694630066532683,
+      "precision_weighted": 0.7552408805253314,
+      "recall_macro": 0.6883324912067886,
+      "recall_weighted": 0.7575301204819277,
+      "f1_macro": 0.6910177235284438,
+      "f1_weighted": 0.7558584131801578
+    },
+    {
+      "Model": "RF (tuned)",
+      "accuracy": 0.7515060240963856,
+      "precision_macro": 0.715114515837525,
+      "precision_weighted": 0.7761980710033399,
+      "recall_macro": 0.7163320104895853,
+      "recall_weighted": 0.7515060240963856,
+      "f1_macro": 0.7096248823134573,
+      "f1_weighted": 0.7596652850057695
+    },
+    {
+      "Model": "GradientBoosting (tuned)",
+      "accuracy": 0.7725903614457831,
+      "precision_macro": 0.7130622153124403,
+      "precision_weighted": 0.7623874517791319,
+      "recall_macro": 0.6964612305694947,
+      "recall_weighted": 0.7725903614457831,
+      "f1_macro": 0.7026796646025725,
+      "f1_weighted": 0.7657369869591389
+    }
+  ],
+  "interaction_summary": {
+    "n_original_features": 40,
+    "n_interactions": 45,
+    "n_total_features": 85,
+    "top_interaction_base_features": [
+      "approval_rate_2nd",
+      "overall_approval_rate",
+      "approval_rate_1st",
+      "grade_per_evaluation_2nd",
+      "total_approved",
+      "Curricular units 2nd sem (approved)",
+      "Curricular units 2nd sem (grade)",
+      "grade_per_evaluation_1st",
+      "Course",
+      "Admission grade"
+    ]
+  },
+  "derived_evidence": {
+    "gate2_status": "PASS",
+    "final_model_by_held_out_test_macro_f1": {
+      "model": "RF (tuned)",
+      "held_out_test_macro_f1": 0.7096,
+      "held_out_test_accuracy": 0.7515,
+      "selection_metric": "macro F1",
+      "selection_rationale": "Macro F1 is prioritized because the dataset is class-imbalanced and Enrolled is the hardest class."
+    },
+    "lr_baseline_test_macro_f1": 0.7079,
+    "rf_default_test_macro_f1": 0.6881,
+    "enrolled_class_weight_f1_changes": {
+      "DT": {
+        "enrolled_f1_no_weight": 0.4034,
+        "enrolled_f1_balanced": 0.5032,
+        "change": 0.0999
+      },
+      "LR": {
+        "enrolled_f1_no_weight": 0.4593,
+        "enrolled_f1_balanced": 0.529,
+        "change": 0.0697
+      },
+      "SVM": {
+        "enrolled_f1_no_weight": 0.0,
+        "enrolled_f1_balanced": 0.4748,
+        "change": 0.4748
+      }
+    },
+    "feature_counts_tested": [
+      10,
+      20,
+      30,
+      40
+    ],
+    "no_top50_feature_count": true,
+    "interaction_dimensions": {
+      "original": 40,
+      "interactions": 45,
+      "total": 85
+    }
+  }
+}
