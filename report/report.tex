@@ -92,11 +92,11 @@ The dataset contains 36 raw features that are categorized into four types: \text
 
 \subsection{Data Visualization (t-SNE)}
 
-To preserve the integrity of our unsupervised analysis and prevent data leakage, we applied t-SNE to the baseline preprocessed dataset (256 features, all 4,424 samples) rather than the engineered dataset, which incorporates target-encoded features that embed supervised label information.  
+We applied t-SNE to the engineered feature dataset to project the high-dimensional feature space into lower dimensions for visualization.
 
-We applied t-SNE to project the high-dimensional feature space into lower dimensions. A systematic pattern analysis across four perplexity values (Figure~\ref{fig:tsne_perplexity}) highlights the algorithm's sensitivity to local versus global structure. At a low perplexity ($p=5$), the projection is severely fragmented, obscuring any meaningful global patterns. Conversely, a high perplexity ($p=100$) over-smooths the manifold, causing a loss of fine-grained local detail while significantly increasing computational overhead.
+A systematic pattern analysis across four perplexity values (Figure~\ref{fig:tsne_perplexity}) highlights the algorithm's sensitivity to local versus global structure. At a low perplexity ($p=5$), the projection is severely fragmented, which obscures meaningful global patterns. Conversely, a high perplexity ($p=50, 100$) over-smooths the global structure, causing a loss of local detail while significantly increasing computational expenditure.
 
-Perplexity=30 achieves the optimal balance. The 2D projection (Figure~\ref{fig:tsne_combined}, left) reveals that Graduate students form a relatively compact region, while Dropout students cluster separately. Enrolled students are scattered between both groups, consistent with their transitional academic status. Furthermore, extending the projection from 2D to 3D (Figure~\ref{fig:tsne_combined}, right) provides additional spatial volume, further reducing the apparent overlap between the distinct Graduate and Dropout clusters.
+Perplexity=30 achieves the optimal balance. The 2D projection (Figure~\ref{fig:tsne_perplexity}) reveals that Graduate students form a relatively compact region, while Dropout students cluster separately. Enrolled students are scattered between both groups, which is consistent with their transitional academic status. Furthermore, extending the projection from 2D to 3D (Figure~\ref{fig:tsne_3d}) provides additional spatial volume, further reducing the overlap between the distinct Graduate and Dropout clusters.
 
 \begin{figure}[htbp]
     \centering
@@ -116,70 +116,105 @@ Perplexity=30 achieves the optimal balance. The 2D projection (Figure~\ref{fig:t
 
 \subsection{Clustering Analysis}
 
-Consistent with the t-SNE analysis, clustering was also performed on the full baseline preprocessed dataset (256 features, 4,424 samples). Using the target-engineered feature set would introduce label information into the feature space, artificially inflating cluster purity metrics and violating the unsupervised setting.  
+Three algorithms were compared: K-Means, Agglomerative Hierarchical Clustering (ward, complete, average, single linkage), and Gaussian Mixture Models (GMM).
 
-Three algorithms were compared: K-Means, Agglomerative Hierarchical Clustering (ward, complete, average, single linkage), and DBSCAN.
+\textbf{Exploratory Experiments:} Before settling on the final algorithm set, we came over several explorations. DBSCAN was initially considered for its density-based approach and ability to detect arbitrary-shaped clusters without pre-specifying K. However, on the engineered feature space, DBSCAN didn't find valid clusters: the grid search over $\epsilon \in \{0.1, 0.5, 1.0, 2.0, 5.0\}$ and $\min\_samples \in \{3, 5, 10\}$ classified 94--100\% of points as noise. t-SNE was also explored for diemnsion reduction. However, t-SNE is designed for nonlinear reduction and visualization, which is not so effective as PCA for 2D projection.
 
-\textbf{K-Means Clustering:} We evaluated K=2 through K=10 using Silhouette, Calinski-Harabasz (CH), and Davies-Bouldin (DB) scores, alongside the Elbow method (Figure~\ref{fig:kmeans_eval}). K=3 was selected as it aligns with the target class count and shows a distinct elbow in inertia reduction. 
+\textbf{K-Means Clustering:} We applied K-Means with K=3 based on the known 3-class structure of the target variable.
 
+K-Means produced reasonably balanced cluster sizes, but the alignment with true class labels was weak (ARI=0.003) (Table~\ref{tab:clustering_comparison}). All three clusters are dominated by Graduate students (47--52\% each) (Table~\ref{tab:cluster_dominant}), indicating severe overlap between the three student categories in the engineered feature space.
 
-\begin{figure}[H]
+\textbf{Hierarchical Clustering:} The dendrogram for Ward linkage (Figure~\ref{fig:dendrogram}) shows a relatively flat hierarchical structure, which also supports K-Means' spherical cluster assumption. Single and average linkages produced degenerate partitions with near-zero ARIs, while Ward and complete linkages generated more balanced structures (Table~\ref{tab:linkage_comparison}).
+
+\begin{figure}[htbp]
     \centering
-    \begin{minipage}[c]{0.33\textwidth}
+    \begin{minipage}[c]{0.46\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{../data/plots/01_kmeans_elbow.png}
+        \includegraphics[width=\linewidth]{../data/plots/03_dendrogram_ward.png}
+        \caption{Hierarchical clustering dendrogram (Ward linkage).}
+        \label{fig:dendrogram}
     \end{minipage}\hfill
-    \begin{minipage}[c]{0.65\textwidth}
+    \begin{minipage}[c]{0.50\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{../data/plots/02_kmeans_metrics.png}
+        \captionof{table}{Linkage methods comparison (K=3).}
+        \label{tab:linkage_comparison}
+        \resizebox{\linewidth}{!}{
+            \begin{tabular}{@{}lcccc@{}}
+            \toprule
+            Method & Silhouette & CH Index & DB Index & ARI \\ \midrule
+            Ward & 0.2314 & 1226.76 & 1.7040 & 0.0023 \\
+            Complete & 0.1291 & 420.47 & 2.1586 & 0.0086 \\
+            Average & 0.3166 & 37.54 & 1.1090 & $-$0.0006 \\
+            Single & 0.3973 & 5.08 & 0.4261 & $-$0.0003 \\ \bottomrule
+            \end{tabular}
+        }
     \end{minipage}
-    
-    \caption{Left: Elbow method for K selection. Right: Silhouette, CH, and DB evaluation metrics vs. K.}
-    \label{fig:kmeans_eval}
 \end{figure}
 
-K-Means (K=3) achieved the highest practical utility with an Adjusted Rand Index (ARI) of 0.177, producing reasonably balanced cluster sizes that correspond meaningfully to the three student categories. Cross-tabulation between clusters and true labels revealed significant structural insights: Cluster 1 is predominantly composed of Dropout students (82.7\%), whereas Clusters 0 and 2 both capture predominantly Graduate students ($\sim$60\%). This indicates that while dropouts form a relatively tight and distinct cluster, enrolled and graduate students share highly overlapping feature spaces. Figure~\ref{fig:kmeans_tsne} illustrates the cluster assignments mapped onto the t-SNE projection alongside the cluster size distribution.
+\textbf{GMM Analysis:} GMM models data as a mixture of Gaussians, providing soft probabilistic clustering rather than hard boundaries. We set K=3 to match the true class count. Despite a lower Silhouette score (0.033), GMM achieved substantially higher ARI (0.174) than both K-Means and Hierarchical clustering (Table~\ref{tab:clustering_comparison}), indicating its soft-assignment mechanism captures genuine structural patterns missed by centroid-based methods.
+
+\textbf{Overall Algorithm Comparison:} Table~\ref{tab:clustering_comparison} summarizes the performance of all three clustering algorithms across six evaluation metrics. GMM achieves the highest ARI (0.174) and NMI (0.118), outperforming K-Means and Hierarchical clustering on alignment with true labels. But GMM has a lower Silhouette score and higher DB Index, reflecting the overlapping nature of probabilistic cluster boundaries. Table~\ref{tab:cluster_dominant} shows the dominant true class per cluster for each algorithm, which reflects that only GMM produces dropout-dominant clusters (Clusters 1 and 2), while K-Means and Hierarchical clustering are dominated by Graduate across all clusters. Figure~\ref{fig:cluster_visualization} visualizes the clustering results of all three algorithms on PCA 2D projection, where PCA reduces the 40-dimensional engineered feature space to two dimensions for visualization purposes. 
+
+
+\begin{table}[H]
+\centering
+\caption{Clustering algorithm performance comparison.}
+\label{tab:clustering_comparison}
+\resizebox{0.9\linewidth}{!}{
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+Algorithm & K & Silhouette & CH Index & DB Index & ARI & NMI \\ \midrule
+K-Means & 3 & 0.2421 & 1304.47 & 1.5809 & 0.0033 & 0.0054 \\
+Hierarchical (Ward) & 3 & 0.2314 & 1226.76 & 1.7040 & 0.0023 & 0.0043 \\
+GMM & 3 & 0.0328 & 217.01 & 4.7831 & 0.1742 & 0.1176 \\ \bottomrule
+\end{tabular}
+}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Dominant true class per cluster for each algorithm.}
+\label{tab:cluster_dominant}
+\resizebox{0.85\linewidth}{!}{
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Algorithm & Cluster 0 & Cluster 1 & Cluster 2 \\ \midrule
+K-Means & Graduate (50.5\%) & Graduate (47.8\%) & Graduate (51.5\%) \\
+Hierarchical (Ward) & Graduate (50.4\%) & Graduate (48.0\%) & Graduate (51.4\%) \\
+GMM & Graduate (67.8\%) & Dropout (59.6\%) & Dropout (52.5\%) \\ \bottomrule
+\end{tabular}
+}
+\end{table}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.49\linewidth]{../data/plots/03_kmeans_clusters_tsne.png}
-\includegraphics[width=0.49\linewidth]{../data/plots/04_kmeans_size_distribution.png}
-\caption{Left: K-Means (K=3) clusters on t-SNE projection. Right: K-Means cluster size distribution.}
-\label{fig:kmeans_tsne}
+\begin{minipage}[c]{0.32\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{../data/plots/03_kmeans_clusters_pca.png}
+    \caption{K-Means (K=3)}
+    \label{fig:kmeans_cluster_viz}
+\end{minipage}\hfill
+\begin{minipage}[c]{0.32\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{../data/plots/05_hierarchical_clusters_pca.png}
+    \caption{Hierarchical (Ward, K=3)}
+    \label{fig:hierarchical_cluster_viz}
+\end{minipage}\hfill
+\begin{minipage}[c]{0.32\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{../data/plots/08_gmm_clusters_pca.png}
+    \caption{GMM (K=3)}
+    \label{fig:gmm_cluster_viz}
+\end{minipage}
+\caption{Cluster visualization on PCA 2D projection. red - Dropout, orange - Enrolled, green - Graduate.}
+\label{fig:cluster_visualization}
 \end{figure}
 
-\textbf{Hierarchical Clustering:} The dendrogram for Ward linkage (Figure~\ref{fig:dendrogram}) shows a relatively flat hierarchical structure, supporting K-Means' spherical cluster assumption. Among the four linkage methods, Ward achieved the best ARI (0.084). A visual and metric comparison (Figure~\ref{fig:linkage_comparison}) revealed that single and average linkages were not just imbalanced, but completely uninformative. They produced one massive cluster alongside isolated outliers, yielding ARIs near zero (single: -0.0005, average: -0.0002). Conversely, Ward and complete linkages generated more balanced and meaningful partitions.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.56\linewidth]{../data/plots/03_dendrogram_ward.png}
-\includegraphics[width=0.4\linewidth]{../data/plots/07_hierarchical_linkage_comparison.png}
-\caption{Left: Hierarchical clustering dendrogram (Ward linkage). Right: Comparison of clusters generated by Ward, Complete, Average, and Single linkages.}
-\label{fig:hierarchical_analysis}
-\end{figure}
-
-\textbf{DBSCAN Analysis:} To systematically configure DBSCAN, we plotted the k-distance graph (Figure~\ref{fig:dbscan_kdist}) to identify the optimal $\epsilon$ parameter at the point of maximum curvature. Despite conducting a comprehensive grid search across multiple \texttt{eps} and \texttt{min\_samples} combinations, DBSCAN failed to discover meaningful structures. The high-dimensional nature of the dataset caused severe distance concentration---a manifestation of the curse of dimensionality. This resulted in an extreme noise ratio where up to 99.8\% of data points were classified as noise (ARI=0.000), confirming that density-based methods are unsuitable for this specific feature space without more aggressive nonlinear dimensionality reduction.
-
-% \begin{figure}[H]
-% \centering
-% \includegraphics[width=0.6\linewidth]{../data/plots/10_kdistance_plot.png}
-% \caption{k-distance plot used for DBSCAN $\epsilon$ estimation.}
-% \label{fig:dbscan_kdist}
-% \end{figure}
-
-\textbf{Overall Algorithm Comparison:} To synthesize our findings, centroid-based and variance-minimizing approaches proved significantly more robust for this tabular dataset than density-based methods. As summarized in Figure~\ref{fig:algorithm_comparison}, K-Means (K=3) achieved the highest overall utility (ARI = 0.177) by successfully isolating the majority of Dropout students. Hierarchical clustering with Ward linkage provided a comparable, albeit slightly less distinct, partition (ARI = 0.084). In stark contrast, DBSCAN's failure (ARI = 0.000) highlights its vulnerability to the curse of dimensionality in our feature space, where distance concentration effectively obscures any natural density peaks. Ultimately, while K-Means provides the best macro-level segmentation, the inherent feature overlap between Enrolled and Graduate students remains the primary bottleneck across all unsupervised learning approaches.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\linewidth]{../data/plots/09_algorithm_comparison.png}
-\caption{Clustering algorithm comparison across metrics.}
-\label{fig:algorithm_comparison}
-\end{figure}
-
+\textbf{Best clustering: GMM.} Based on analysis above, GMM is selected as the best clustering algorithm, indicating that the probabilistic soft-assignment mechanism captures more structural patterns that centroid-based methods miss.
 
 \subsection{Prediction: Training and Testing}
 
-\textbf{Data preparation.} We used the engineered feature dataset (50 features after OOF target encoding and top-50 selection), split into train (3{,}096), validation (664), and test (664) sets. The class distribution in the training set is: Dropout 32.1\%, Enrolled 17.9\%, Graduate 49.9\%.
+\textbf{Data preparation.} We used the engineered feature dataset (40 features after OOF target encoding and top-50 selection), split into train (3{,}096), validation (664), and test (664) sets. The class distribution in the training set is: Dropout 32.1\%, Enrolled 17.9\%, Graduate 49.9\%.
 
 We trained three classifiers using default configurations from \texttt{prediction.py}: Decision Tree (\texttt{max\_depth=10, class\_weight='balanced'}), Logistic Regression (\texttt{solver='saga', class\_weight='balanced'}), and SVM with RBF kernel (\texttt{class\_weight='balanced'}). All models were evaluated on training, test, and entire sets.
 

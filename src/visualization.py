@@ -13,7 +13,6 @@ CLASS_COLORS = {0: "#e74c3c", 1: "#f39c12", 2: "#2ecc71"}
 CLASS_NAMES = {0: "Dropout", 1: "Enrolled", 2: "Graduate"}
 
 
-# ============================================================================
 # t-SNE
 
 def compute_tsne(X: np.ndarray, perplexity: int = 30, n_components: int = 2, random_state: int = 42, max_iter: int = 1000, learning_rate: str | float = "auto"):

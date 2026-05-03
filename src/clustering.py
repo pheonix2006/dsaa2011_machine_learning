@@ -2,7 +2,7 @@
 Data clustering utilities for Student Dropout and Academic Success dataset.
 
 Provides functions for:
-- K-Means, Agglomerative, and DBSCAN clustering
+- K-Means, Agglomerative, and GMM clustering
 - Cluster evaluation metrics
 - Cluster visualization
 """
@@ -15,7 +15,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from scipy.cluster.hierarchy import dendrogram, linkage
-from sklearn.cluster import AgglomerativeClustering, DBSCAN, KMeans
+from sklearn.cluster import AgglomerativeClustering, KMeans
+from sklearn.mixture import GaussianMixture
 from sklearn.metrics import (
     adjusted_rand_score,
     calinski_harabasz_score,
@@ -51,11 +52,13 @@ def apply_agglomerative(X: np.ndarray, n_clusters: int, linkage: str = "ward"):
     return labels, model
 
 
-def apply_dbscan(X: np.ndarray, eps: float = 0.5, min_samples: int = 5):
-    """Apply DBSCAN clustering and return labels and model. -1 = noise."""
-    model = DBSCAN(eps=eps, min_samples=min_samples)
-    labels = model.fit_predict(X)
-    return labels, model
+def apply_gmm(X: np.ndarray, n_components: int, covariance_type: str = "full", random_state: int = 42, n_init: int = 5):
+    """Apply Gaussian Mixture Model clustering and return labels, model, and probabilities."""
+    model = GaussianMixture(n_components=n_components, covariance_type=covariance_type, random_state=random_state, n_init=n_init)
+    model.fit(X)
+    labels = model.predict(X)
+    probs = model.predict_proba(X)
+    return labels, model, probs
 
 
 # Cluster Evaluation Metrics
@@ -64,115 +67,22 @@ def evaluate_clustering(X: np.ndarray, labels: np.ndarray, y_true: Optional[np.n
     """Evaluate clustering quality with multiple metrics
     including silhouette, calinski_harabasz, davies_bouldin, adjusted_rand_index, normalized_mutual_info.
     """
-    # Filter out noise points (DBSCAN label = -1)
-    mask = labels >= 0
-    n_total = len(labels)
-    n_noise = int(np.sum(~mask))
-    noise_ratio = n_noise / n_total if n_total > 0 else 0.0
-
-    n_clusters = len(set(labels[mask]))
-
-    if n_clusters < 2:
-        print(f"Warning: Only {n_clusters} cluster(s) found.")
-        return {"noise_ratio": noise_ratio}
-
-    X_valid = X[mask]
-    labels_valid = labels[mask]
-
     metrics = {
-        "silhouette": silhouette_score(X_valid, labels_valid),
-        "silhouette_std": silhouette_samples(X_valid, labels_valid).std(),
-        "calinski_harabasz": calinski_harabasz_score(X_valid, labels_valid),
-        "davies_bouldin": davies_bouldin_score(X_valid, labels_valid),
-        "noise_ratio": noise_ratio,
+        "silhouette": silhouette_score(X, labels),
+        "silhouette_std": silhouette_samples(X, labels).std(),
+        "calinski_harabasz": calinski_harabasz_score(X, labels),
+        "davies_bouldin": davies_bouldin_score(X, labels),
+        "noise_ratio": 0.0,
     }
 
     if y_true is not None:
-        y_valid = np.asarray(y_true)[mask]
-        metrics["adjusted_rand_index"] = adjusted_rand_score(y_valid, labels_valid)
-        metrics["normalized_mutual_info"] = normalized_mutual_info_score(y_valid, labels_valid)
+        metrics["adjusted_rand_index"] = adjusted_rand_score(y_true, labels)
+        metrics["normalized_mutual_info"] = normalized_mutual_info_score(y_true, labels)
 
     return metrics
 
 
-def find_optimal_kmeans(X: np.ndarray, k_range: range, random_state: int = 42):
-    """Find optimal K for K-Means by computing metrics for each K."""
-    results = {}
-    for k in k_range:
-        if k < 2:
-            continue
-        labels, model = apply_kmeans(X, n_clusters=k, random_state=random_state)
-        metrics = evaluate_clustering(X, labels)
-        results[k] = {
-            "inertia": model.inertia_,
-            "silhouette": metrics.get("silhouette", np.nan),
-            "calinski_harabasz": metrics.get("calinski_harabasz", np.nan),
-            "davies_bouldin": metrics.get("davies_bouldin", np.nan),
-        }
-    return results
-
-
 # Visualization
-
-def plot_elbow_method(results: dict[int, dict[str, float]], save_path: Optional[str] = None):
-    """Plot inertia curve for elbow method."""
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ks = sorted(results.keys())
-    inertias = [results[k]["inertia"] for k in ks]
-
-    ax.plot(ks, inertias, "bo-", linewidth=2, markersize=8)
-    ax.set_xlabel("Number of Clusters (K)")
-    ax.set_ylabel("Inertia")
-    ax.set_title("Elbow Method for Optimal K", fontweight="bold")
-    ax.grid(True, alpha=0.3)
-    ax.set_xticks(ks)
-
-    if save_path:
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        plt.savefig(save_path, dpi=150, bbox_inches="tight")
-        print(f"Plot saved to {save_path}")
-
-    plt.tight_layout()
-    return fig
-
-
-def plot_metric_comparison(results: dict[int, dict[str, float]], metrics: list[str], save_path: Optional[str] = None):
-    """Plot clustering metrics across different K values."""
-    metric_titles = {
-        "silhouette": "Silhouette Score",
-        "calinski_harabasz": "Calinski-Harabasz Index",
-        "davies_bouldin": "Davies-Bouldin Index",
-    }
-
-    fig, axes = plt.subplots(1, len(metrics), figsize=(6 * len(metrics), 5))
-    if len(metrics) == 1:
-        axes = [axes]
-
-    ks = sorted(results.keys())
-
-    for ax, metric in zip(axes, metrics):
-        values = [results[k][metric] for k in ks]
-        ax.plot(ks, values, "go-", linewidth=2, markersize=8)
-        ax.set_xlabel("Number of Clusters (K)")
-        ax.set_ylabel(metric_titles.get(metric, metric))
-        ax.set_title(metric_titles.get(metric, metric), fontweight="bold")
-        ax.grid(True, alpha=0.3)
-        ax.set_xticks(ks)
-
-        # Mark optimal K
-        best_k = ks[np.argmin(values)] if metric == "davies_bouldin" else ks[np.argmax(values)]
-        ax.axvline(x=best_k, color="red", linestyle="--", alpha=0.7, label=f"Optimal K={best_k}")
-        ax.legend()
-
-    plt.suptitle("K-Means: Clustering Quality Metrics", fontweight="bold", y=1.02)
-    plt.tight_layout()
-
-    if save_path:
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        plt.savefig(save_path, dpi=150, bbox_inches="tight")
-        print(f"Plot saved to {save_path}")
-
-    return fig
 
 
 def plot_cluster_scatter(X_2d: np.ndarray, labels: np.ndarray, title: str, y_true: Optional[np.ndarray] = None, save_path: Optional[str] = None, ax: Optional[plt.Axes] = None, show_legend: bool = True):
@@ -185,13 +95,8 @@ def plot_cluster_scatter(X_2d: np.ndarray, labels: np.ndarray, title: str, y_tru
 
     for i, label in enumerate(unique_labels):
         mask = labels == label
-        if label == -1:
-            # Noise points (DBSCAN)
-            color, marker, name, alpha = "gray", "x", "Noise", 0.4
-        else:
-            color = CLUSTER_COLORS[i % len(CLUSTER_COLORS)]
-            marker, name, alpha = "o", f"Cluster {label}", 0.6
-
+        color = CLUSTER_COLORS[i % len(CLUSTER_COLORS)]
+        marker, name, alpha = "o", f"Cluster {label}", 0.6
         ax.scatter(X_2d[mask, 0], X_2d[mask, 1], c=color, label=name, alpha=alpha, s=15, marker=marker)
 
     # Overlay true class boundaries
@@ -286,7 +191,7 @@ def plot_cluster_size_distribution(labels: np.ndarray, title: str, save_path: Op
     unique, counts = unique[sorted_idx], counts[sorted_idx]
 
     # Assign colors
-    colors = ["gray" if u == -1 else CLUSTER_COLORS[u % len(CLUSTER_COLORS)] for u in unique]
+    colors = [CLUSTER_COLORS[u % len(CLUSTER_COLORS)] for u in unique]
 
     bars = ax.bar([str(u) for u in unique], counts, color=colors, edgecolor="white")
     ax.set_xlabel("Cluster ID")
@@ -353,39 +258,16 @@ def rank_algorithms(all_results: dict[str, dict[str, float]]) -> list[tuple[str,
 
     Metrics are min-max normalized to [0,1], DB Index inverted (lower=better),
     then summed with equal weights.
-
-    Noise penalty rules:
-    - noise_ratio > 0.5: algorithm excluded from ranking (appended at end with score 0.0)
-    - 0 < noise_ratio <= 0.5: final score scaled by (1 - noise_ratio)
     """
     metrics_keys = ["silhouette", "calinski_harabasz", "davies_bouldin",
                     "adjusted_rand_index", "normalized_mutual_info"]
 
-    # Separate algorithms with excessive noise (>50%) from valid ones
-    excluded = []
-    valid_names = []
-    for name, res in all_results.items():
-        nr = res.get("noise_ratio", 0.0)
-        if nr > 0.5:
-            print(f"Excluding '{name}' from ranking: noise_ratio={nr:.3f} > 0.5")
-            excluded.append(name)
-        else:
-            valid_names.append(name)
-
-    # If all algorithms are excluded, return all with score 0.0
-    if not valid_names:
+    present_keys = [k for k in metrics_keys
+                    if all(k in v for v in all_results.values())]
+    if not present_keys:
         return [(name, 0.0) for name in all_results]
 
-    valid_results = {name: all_results[name] for name in valid_names}
-
-    present_keys = [k for k in metrics_keys
-                    if all(k in v for v in valid_results.values())]
-    if not present_keys:
-        ranked = [(name, 0.0) for name in valid_names]
-        ranked += [(name, 0.0) for name in excluded]
-        return ranked
-
-    raw = {name: {k: res[k] for k in present_keys} for name, res in valid_results.items()}
+    raw = {name: {k: res[k] for k in present_keys} for name, res in all_results.items()}
 
     normalized: dict[str, dict[str, float]] = {name: {} for name in raw}
     for key in present_keys:
@@ -398,14 +280,7 @@ def rank_algorithms(all_results: dict[str, dict[str, float]]) -> list[tuple[str,
                 norm_val = 1.0 - norm_val
             normalized[name][key] = norm_val
 
-    scores: dict[str, float] = {}
-    for name in normalized:
-        base_score = sum(normalized[name].values())
-        nr = all_results[name].get("noise_ratio", 0.0)
-        if nr > 0.0:
-            base_score = base_score * (1.0 - nr)
-        scores[name] = base_score
+    scores: dict[str, float] = {name: sum(normalized[name].values()) for name in normalized}
 
     ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-    ranked += [(name, 0.0) for name in excluded]
     return ranked
