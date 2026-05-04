@@ -28,7 +28,7 @@ class TestGetModel:
 
     def test_returns_lr(self):
         m = get_model("lr")
-        assert m.max_iter == 10000  # TDD: will fail first (currently 5000), then fix
+        assert m.max_iter == 50000
 
     def test_returns_svm(self):
         m = get_model("svm")

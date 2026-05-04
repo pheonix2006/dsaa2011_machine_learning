@@ -7,6 +7,7 @@ from src.preprocessing import (
     handle_missing_values,
     encode_features,
     standardize_features,
+    standardize_feature_splits,
     NOMINAL_FEATURES,
     BINARY_FEATURES,
     CONTINUOUS_FEATURES,
@@ -212,3 +213,46 @@ class TestStandardizeFeatures:
         for col in ft["count"]:
             if col in result.columns:
                 assert abs(result[col].mean()) < 0.5
+
+
+class TestStandardizeFeatureSplits:
+    def test_fit_on_train_and_preserve_binary_columns(self):
+        X_train = pd.DataFrame(
+            {
+                "large_score": [10, 20, 30, 40],
+                "count_like": [0, 2, 4, 6],
+                "binary_flag": [0, 1, 0, 1],
+            }
+        )
+        X_val = pd.DataFrame(
+            {
+                "large_score": [20, 50],
+                "count_like": [2, 8],
+                "binary_flag": [1, 0],
+            }
+        )
+        X_test = pd.DataFrame(
+            {
+                "large_score": [30, 60],
+                "count_like": [4, 10],
+                "binary_flag": [0, 1],
+            }
+        )
+
+        train_scaled, val_scaled, test_scaled, scaler, scaled_cols = standardize_feature_splits(
+            X_train,
+            X_val,
+            X_test,
+            binary_columns=["binary_flag"],
+        )
+
+        assert scaled_cols == ["large_score", "count_like"]
+        assert scaler is not None
+        assert np.allclose(train_scaled[scaled_cols].mean().to_numpy(), 0.0)
+        assert np.allclose(train_scaled[scaled_cols].std(ddof=0).to_numpy(), 1.0)
+        pd.testing.assert_series_equal(train_scaled["binary_flag"], X_train["binary_flag"])
+        pd.testing.assert_series_equal(val_scaled["binary_flag"], X_val["binary_flag"])
+        pd.testing.assert_series_equal(test_scaled["binary_flag"], X_test["binary_flag"])
+
+        expected_val_first = (20.0 - X_train["large_score"].mean()) / X_train["large_score"].std(ddof=0)
+        assert val_scaled["large_score"].iloc[0] == pytest.approx(expected_val_first)

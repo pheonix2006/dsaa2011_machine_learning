@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from scipy.cluster.hierarchy import dendrogram, linkage
-from sklearn.cluster import AgglomerativeClustering, KMeans
+from sklearn.cluster import AgglomerativeClustering, DBSCAN, KMeans
 from sklearn.mixture import GaussianMixture
 from sklearn.metrics import (
     adjusted_rand_score,
@@ -52,6 +52,13 @@ def apply_agglomerative(X: np.ndarray, n_clusters: int, linkage: str = "ward"):
     return labels, model
 
 
+def apply_dbscan(X: np.ndarray, eps: float = 0.5, min_samples: int = 5):
+    """Apply DBSCAN clustering and return labels and model."""
+    model = DBSCAN(eps=eps, min_samples=min_samples)
+    labels = model.fit_predict(X)
+    return labels, model
+
+
 def apply_gmm(X: np.ndarray, n_components: int, covariance_type: str = "full", random_state: int = 42, n_init: int = 5):
     """Apply Gaussian Mixture Model clustering and return labels, model, and probabilities."""
     model = GaussianMixture(n_components=n_components, covariance_type=covariance_type, random_state=random_state, n_init=n_init)
@@ -67,6 +74,11 @@ def evaluate_clustering(X: np.ndarray, labels: np.ndarray, y_true: Optional[np.n
     """Evaluate clustering quality with multiple metrics
     including silhouette, calinski_harabasz, davies_bouldin, adjusted_rand_index, normalized_mutual_info.
     """
+    unique_labels = set(labels)
+    non_noise_labels = unique_labels - {-1}
+    if len(non_noise_labels) < 2:
+        return {}
+
     metrics = {
         "silhouette": silhouette_score(X, labels),
         "silhouette_std": silhouette_samples(X, labels).std(),
@@ -80,6 +92,37 @@ def evaluate_clustering(X: np.ndarray, labels: np.ndarray, y_true: Optional[np.n
         metrics["normalized_mutual_info"] = normalized_mutual_info_score(y_true, labels)
 
     return metrics
+
+
+def find_optimal_kmeans(X: np.ndarray, k_range=range(2, 11), random_state: int = 42):
+    """Evaluate K-Means over a range of k values."""
+    results = {}
+    for k in k_range:
+        labels, model = apply_kmeans(X, n_clusters=k, random_state=random_state)
+        metrics = evaluate_clustering(X, labels)
+        results[k] = {"inertia": model.inertia_, **metrics}
+    return results
+
+
+def rank_algorithms(all_results: dict[str, dict[str, float]]):
+    """Rank clustering algorithms by normalized metric scores."""
+    if not all_results:
+        return []
+
+    metrics = ["silhouette", "calinski_harabasz", "davies_bouldin", "adjusted_rand_index", "normalized_mutual_info"]
+    scores = {name: 0.0 for name in all_results}
+    for metric in metrics:
+        values = np.array([result.get(metric, np.nan) for result in all_results.values()], dtype=float)
+        if np.isnan(values).all() or np.nanmax(values) == np.nanmin(values):
+            continue
+        if metric == "davies_bouldin":
+            normalized = (np.nanmax(values) - values) / (np.nanmax(values) - np.nanmin(values))
+        else:
+            normalized = (values - np.nanmin(values)) / (np.nanmax(values) - np.nanmin(values))
+        for name, score in zip(all_results, normalized):
+            if not np.isnan(score):
+                scores[name] += float(score)
+    return sorted(scores.items(), key=lambda item: item[1], reverse=True)
 
 
 # Visualization
@@ -178,6 +221,39 @@ def plot_algorithm_comparison(all_results: dict[str, dict[str, float]], y_true: 
         plt.savefig(save_path, dpi=150, bbox_inches="tight")
         print(f"Plot saved to {save_path}")
 
+    return fig
+
+
+def plot_elbow_method(results: dict[int, dict[str, float]], save_path: Optional[str] = None):
+    """Plot K-Means inertia across k values."""
+    ks = sorted(results)
+    inertias = [results[k]["inertia"] for k in ks]
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.plot(ks, inertias, "o-", color="#3498db")
+    ax.set_xlabel("Number of clusters (k)")
+    ax.set_ylabel("Inertia")
+    ax.set_title("K-Means Elbow Method", fontweight="bold")
+    ax.grid(True, alpha=0.3)
+    plt.tight_layout()
+    if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path, dpi=150, bbox_inches="tight")
+    return fig
+
+
+def plot_cluster_size_distribution(labels: np.ndarray, title: str, save_path: Optional[str] = None):
+    """Plot cluster size distribution."""
+    counts = pd.Series(labels).value_counts().sort_index()
+    fig, ax = plt.subplots(figsize=(8, 5))
+    counts.plot.bar(ax=ax, color="#3498db", edgecolor="white")
+    ax.set_xlabel("Cluster")
+    ax.set_ylabel("Samples")
+    ax.set_title(title, fontweight="bold")
+    ax.grid(True, alpha=0.3, axis="y")
+    plt.tight_layout()
+    if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path, dpi=150, bbox_inches="tight")
     return fig
 
 def compare_clusters_to_classes(labels: np.ndarray, y_true: np.ndarray):

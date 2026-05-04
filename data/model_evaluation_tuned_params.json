@@ -10,20 +10,20 @@
   },
   "Logistic Regression": {
     "best_params": {
-      "C": 1,
+      "C": 10,
       "class_weight": "balanced",
       "max_iter": 50000,
-      "penalty": "l1",
+      "penalty": "l2",
       "solver": "saga"
     },
-    "best_cv_f1_macro": 0.7054284459440657
+    "best_cv_f1_macro": 0.7051192103076936
   },
   "SVM (RBF)": {
     "best_params": {
-      "C": 100,
+      "C": 10,
       "class_weight": "balanced",
-      "gamma": "scale"
+      "gamma": 0.01
     },
-    "best_cv_f1_macro": 0.6744625823205653
+    "best_cv_f1_macro": 0.7038991739716473
   }
 }

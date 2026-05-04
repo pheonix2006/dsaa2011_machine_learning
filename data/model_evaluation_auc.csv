@@ -1,13 +1,4 @@
 model,class,auc
-Decision Tree,Dropout,0.8002196475229797
-Decision Tree,Enrolled,0.703723691311387
-Decision Tree,Graduate,0.8488895340397735
-Decision Tree,macro,0.7842776242913801
-Logistic Regression,Dropout,0.9126094333926694
-Logistic Regression,Enrolled,0.8250096368822758
-Logistic Regression,Graduate,0.9313307446654087
-Logistic Regression,macro,0.8896499383134513
-SVM (RBF),Dropout,0.8953915659515109
-SVM (RBF),Enrolled,0.7964844653457713
-SVM (RBF),Graduate,0.9070710553055595
-SVM (RBF),macro,0.8663156955342806
+Decision Tree,Macro,0.7825514309834328
+Logistic Regression,Macro,0.8879805826758663
+SVM (RBF),Macro,0.8875369000192129

@@ -36,6 +36,58 @@ def calculate_metrics(y_true: np.ndarray, y_pred: np.ndarray):
         "f1_weighted": f1_score(y_true, y_pred, average="weighted", zero_division=0),
     }
 
+
+def plot_roc_curves(
+    models: dict[str, object],
+    X: np.ndarray,
+    y: np.ndarray,
+    save_path: Optional[str] = None,
+):
+    """Plot one-vs-rest macro ROC curves and attach per-class AUC values to the figure."""
+    y_bin = label_binarize(y, classes=CLASSES)
+    mean_fpr = np.linspace(0, 1, 100)
+    auc_dict: dict[str, dict[str, float]] = {}
+
+    fig, ax = plt.subplots(figsize=(10, 7))
+    for name, model in models.items():
+        if hasattr(model, "predict_proba"):
+            y_score = model.predict_proba(X)
+        else:
+            y_score = model.decision_function(X)
+
+        class_aucs = {}
+        interp_tprs = []
+        for i, class_id in enumerate(CLASSES):
+            fpr, tpr, _ = roc_curve(y_bin[:, i], y_score[:, i])
+            class_auc = auc(fpr, tpr)
+            class_aucs[CLASS_NAMES[class_id]] = float(class_auc)
+            interp_tpr = np.interp(mean_fpr, fpr, tpr)
+            interp_tpr[0] = 0.0
+            interp_tprs.append(interp_tpr)
+
+        mean_tpr = np.mean(interp_tprs, axis=0)
+        mean_tpr[-1] = 1.0
+        macro_auc = auc(mean_fpr, mean_tpr)
+        class_aucs["macro"] = float(macro_auc)
+        auc_dict[name] = class_aucs
+        ax.plot(mean_fpr, mean_tpr, linewidth=2, label=f"{name} (macro AUC={macro_auc:.3f})")
+
+    ax.plot([0, 1], [0, 1], "k--", linewidth=1, alpha=0.6)
+    ax.set_xlabel("False Positive Rate")
+    ax.set_ylabel("True Positive Rate")
+    ax.set_title("Macro-average ROC Curves", fontweight="bold")
+    ax.legend(loc="lower right")
+    ax.grid(True, alpha=0.3)
+    plt.tight_layout()
+
+    if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path, dpi=150, bbox_inches="tight")
+        print(f"Plot saved to {save_path}")
+
+    fig.auc_dict = auc_dict
+    return fig
+
 def cross_validate_model(model, X: np.ndarray, y: np.ndarray, cv: int = 5, scoring: str = "f1_macro"):
     """Run K-fold cross-validation and return mean/std of scores."""
     scores = cross_val_score(model, X, y, cv=cv, scoring=scoring, n_jobs=-1)

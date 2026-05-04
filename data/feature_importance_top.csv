@@ -1,41 +1,41 @@
 model,rank,feature,importance
-Random Forest (tuned),1,overall_approval_rate,0.11197519096690825
-Random Forest (tuned),2,approval_rate_2nd,0.10165435273231825
-Random Forest (tuned),3,Curricular units 2nd sem (approved),0.06405591727239579
-Random Forest (tuned),4,total_approved,0.05642482703401211
-Random Forest (tuned),5,approval_rate_1st,0.053017240381630915
-Random Forest (tuned),6,grade_per_evaluation_2nd,0.04847581369306835
-Random Forest (tuned),7,Curricular units 2nd sem (grade),0.045328375353093316
-Random Forest (tuned),8,Tuition fees up to date,0.0399483157371586
-Random Forest (tuned),9,grade_per_evaluation_1st,0.029747381054033163
-Random Forest (tuned),10,evaluation_intensity_2nd,0.028128765628185677
-Random Forest (tuned),11,Curricular units 1st sem (grade),0.027684380792030096
-Random Forest (tuned),12,Course,0.025296449917099686
-Random Forest (tuned),13,Age at enrollment,0.02420575280358179
-Random Forest (tuned),14,Curricular units 1st sem (approved),0.022568896432760752
-Random Forest (tuned),15,Admission grade,0.019757534173229282
-Random Forest (tuned),16,Application mode,0.018549347588215883
-Random Forest (tuned),17,Mother's occupation,0.01828325749157291
-Random Forest (tuned),18,evaluation_intensity_1st,0.01808200357103211
-Random Forest (tuned),19,Father's occupation,0.017535980210524594
-Random Forest (tuned),20,grade_improvement,0.017374959300824524
-GradientBoosting (tuned),1,overall_approval_rate,0.465097049359172
+Random Forest (tuned),1,overall_approval_rate,0.10977487037399175
+Random Forest (tuned),2,approval_rate_2nd,0.09955105065438184
+Random Forest (tuned),3,Curricular units 2nd sem (approved),0.06602093390223486
+Random Forest (tuned),4,total_approved,0.05681269120282212
+Random Forest (tuned),5,approval_rate_1st,0.05303398954428021
+Random Forest (tuned),6,grade_per_evaluation_2nd,0.050330278478368275
+Random Forest (tuned),7,Curricular units 2nd sem (grade),0.044561711622433296
+Random Forest (tuned),8,Tuition fees up to date,0.038749742517483705
+Random Forest (tuned),9,grade_per_evaluation_1st,0.031034355380088814
+Random Forest (tuned),10,Curricular units 1st sem (grade),0.027910936671350372
+Random Forest (tuned),11,evaluation_intensity_2nd,0.027258450473188815
+Random Forest (tuned),12,Course,0.02568382155978733
+Random Forest (tuned),13,Age at enrollment,0.024482279404224663
+Random Forest (tuned),14,Curricular units 1st sem (approved),0.023242172255074328
+Random Forest (tuned),15,Admission grade,0.01992048514398241
+Random Forest (tuned),16,Application mode,0.018841709848581502
+Random Forest (tuned),17,evaluation_intensity_1st,0.018038398490582197
+Random Forest (tuned),18,Mother's occupation,0.017934592760552197
+Random Forest (tuned),19,Father's occupation,0.017614477173683078
+Random Forest (tuned),20,Mother's qualification,0.017032855650208942
+GradientBoosting (tuned),1,overall_approval_rate,0.4650970493591716
 GradientBoosting (tuned),2,approval_rate_2nd,0.13790011878108802
-GradientBoosting (tuned),3,Tuition fees up to date,0.05995693393971028
-GradientBoosting (tuned),4,evaluation_intensity_2nd,0.03937969099607994
-GradientBoosting (tuned),5,Course,0.0335067746460444
-GradientBoosting (tuned),6,Age at enrollment,0.018564283520476847
-GradientBoosting (tuned),7,grade_per_evaluation_2nd,0.016660182275539476
-GradientBoosting (tuned),8,Mother's occupation,0.016400409656904442
-GradientBoosting (tuned),9,Admission grade,0.01463711539376384
-GradientBoosting (tuned),10,total_enrolled,0.01350320157171334
-GradientBoosting (tuned),11,Curricular units 2nd sem (grade),0.013462698705052959
-GradientBoosting (tuned),12,Curricular units 1st sem (enrolled),0.013203106911729939
-GradientBoosting (tuned),13,grade_improvement,0.011938441569311203
-GradientBoosting (tuned),14,Previous qualification (grade),0.010927459336350021
-GradientBoosting (tuned),15,no_financial_stress,0.010176930290820828
-GradientBoosting (tuned),16,Curricular units 2nd sem (enrolled),0.009336878223087942
-GradientBoosting (tuned),17,Father's qualification,0.008667565895832993
-GradientBoosting (tuned),18,evaluation_intensity_1st,0.008280165075752109
-GradientBoosting (tuned),19,GDP,0.007932321885891802
-GradientBoosting (tuned),20,Father's occupation,0.007760003371208283
+GradientBoosting (tuned),3,Tuition fees up to date,0.05995693393971037
+GradientBoosting (tuned),4,evaluation_intensity_2nd,0.03937969099608001
+GradientBoosting (tuned),5,Course,0.033458569653125735
+GradientBoosting (tuned),6,Age at enrollment,0.018564283520476822
+GradientBoosting (tuned),7,grade_per_evaluation_2nd,0.0166983654667742
+GradientBoosting (tuned),8,Mother's occupation,0.016400409656904355
+GradientBoosting (tuned),9,Curricular units 1st sem (enrolled),0.014966619794549956
+GradientBoosting (tuned),10,Admission grade,0.01463946496988575
+GradientBoosting (tuned),11,Curricular units 2nd sem (grade),0.013462698705053053
+GradientBoosting (tuned),12,Curricular units 2nd sem (enrolled),0.012939326653553462
+GradientBoosting (tuned),13,grade_improvement,0.011938441569311386
+GradientBoosting (tuned),14,Previous qualification (grade),0.010952333558926755
+GradientBoosting (tuned),15,no_financial_stress,0.010176930290820814
+GradientBoosting (tuned),16,Father's qualification,0.008667565895832946
+GradientBoosting (tuned),17,GDP,0.008284278218575287
+GradientBoosting (tuned),18,evaluation_intensity_1st,0.00828016507575235
+GradientBoosting (tuned),19,total_enrolled,0.008069415973492868
+GradientBoosting (tuned),20,Father's occupation,0.007760003371208198

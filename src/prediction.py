@@ -51,6 +51,20 @@ def predict_and_evaluate(model, X: np.ndarray, y: np.ndarray, set_name: str = "t
     return {"set_name": set_name, "accuracy": acc, "report": report, "confusion_matrix": cm, "y_pred": y_pred}
 
 
+def compare_models(results: dict[str, dict]):
+    """Build a compact comparison table from predict_and_evaluate outputs."""
+    rows = []
+    for name, result in results.items():
+        report = result["report"]
+        rows.append({
+            "Model": name,
+            "Accuracy": result["accuracy"],
+            "F1 (macro)": report["macro avg"]["f1-score"],
+            "F1 (weighted)": report["weighted avg"]["f1-score"],
+        })
+    return pd.DataFrame(rows)
+
+
 def plot_confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray, title: str = "Confusion Matrix", labels: Optional[list[str]] = None, save_path: Optional[str] = None, ax: Optional[plt.Axes] = None):
     """Plot confusion matrix heatmap."""
     if labels is None:
