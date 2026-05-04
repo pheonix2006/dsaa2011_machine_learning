@@ -51,14 +51,7 @@ def predict_and_evaluate(model, X: np.ndarray, y: np.ndarray, set_name: str = "t
     return {"set_name": set_name, "accuracy": acc, "report": report, "confusion_matrix": cm, "y_pred": y_pred}
 
 
-def plot_confusion_matrix(
-    y_true: np.ndarray,
-    y_pred: np.ndarray,
-    title: str = "Confusion Matrix",
-    labels: Optional[list[str]] = None,
-    save_path: Optional[str] = None,
-    ax: Optional[plt.Axes] = None,
-):
+def plot_confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray, title: str = "Confusion Matrix", labels: Optional[list[str]] = None, save_path: Optional[str] = None, ax: Optional[plt.Axes] = None):
     """Plot confusion matrix heatmap."""
     if labels is None:
         labels = list(CLASS_NAMES.values())
@@ -79,13 +72,7 @@ def plot_confusion_matrix(
     return ax
 
 
-def plot_decision_boundary(
-    model,
-    X_2d: np.ndarray,
-    y: np.ndarray,
-    title: str = "Decision Boundary",
-    save_path: Optional[str] = None,
-):
+def plot_decision_boundary(model, X_2d: np.ndarray, y: np.ndarray, title: str = "Decision Boundary", save_path: Optional[str] = None):
     """Plot decision boundary on 2D projected data (e.g., t-SNE)."""
     h = 0.5
     x_min, x_max = X_2d[:, 0].min() - 1, X_2d[:, 0].max() + 1
@@ -110,19 +97,3 @@ def plot_decision_boundary(
         plt.savefig(save_path, dpi=150, bbox_inches="tight")
         print(f"Plot saved to {save_path}")
     return fig
-
-
-def compare_models(results: dict[str, dict]) -> pd.DataFrame:
-    """Build comparison DataFrame from {model_name: eval_result} dict."""
-    rows = []
-    for name, res in results.items():
-        r = res["report"]
-        rows.append({
-            "Model": name,
-            "Set": res["set_name"],
-            "Accuracy": res["accuracy"],
-            "Precision (macro)": r["macro avg"]["precision"],
-            "Recall (macro)": r["macro avg"]["recall"],
-            "F1 (macro)": r["macro avg"]["f1-score"],
-        })
-    return pd.DataFrame(rows)

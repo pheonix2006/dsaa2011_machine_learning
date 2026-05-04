@@ -24,7 +24,7 @@ CLASS_NAMES = {0: "Dropout", 1: "Enrolled", 2: "Graduate"}
 CLASSES = [0, 1, 2]
 
 
-def calculate_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
+def calculate_metrics(y_true: np.ndarray, y_pred: np.ndarray):
     """Calculate accuracy, precision, recall, F1 (macro and weighted)."""
     return {
         "accuracy": accuracy_score(y_true, y_pred),
@@ -36,71 +36,7 @@ def calculate_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
         "f1_weighted": f1_score(y_true, y_pred, average="weighted", zero_division=0),
     }
 
-
-def plot_roc_curves(
-    models_dict: dict,
-    X_test: np.ndarray,
-    y_test: np.ndarray,
-    save_path: Optional[str] = None,
-) -> tuple[plt.Figure, dict[str, dict[str, float]]]:
-    """Plot One-vs-Rest ROC curves for multiple models (3-class)."""
-    y_bin = label_binarize(y_test, classes=CLASSES)
-    n_classes = y_bin.shape[1]
-    colors_per_class = ["#e74c3c", "#f39c12", "#2ecc71"]
-
-    n_models = len(models_dict)
-    fig, axes = plt.subplots(1, n_models, figsize=(7 * n_models, 6))
-    if n_models == 1:
-        axes = [axes]
-
-    auc_dict = {}
-    for ax, (model_name, model) in zip(axes, models_dict.items()):
-        if hasattr(model, "predict_proba"):
-            y_score = model.predict_proba(X_test)
-        elif hasattr(model, "decision_function"):
-            y_score = model.decision_function(X_test)
-        else:
-            ax.text(0.5, 0.5, "No probability output", ha="center", va="center")
-            continue
-
-        auc_values = []
-        model_aucs = {}
-        for i in range(n_classes):
-            fpr, tpr, _ = roc_curve(y_bin[:, i], y_score[:, i])
-            roc_auc = auc(fpr, tpr)
-            auc_values.append(roc_auc)
-            model_aucs[CLASS_NAMES[i]] = roc_auc
-            ax.plot(fpr, tpr, color=colors_per_class[i], lw=2,
-                    label=f"{CLASS_NAMES[i]} (AUC={roc_auc:.3f})")
-
-        ax.plot([0, 1], [0, 1], "k--", lw=1, alpha=0.5)
-        ax.set_xlabel("False Positive Rate")
-        ax.set_ylabel("True Positive Rate")
-        macro_auc = np.mean(auc_values)
-        model_aucs["macro"] = float(macro_auc)
-        auc_dict[model_name] = model_aucs
-        ax.set_title(f"{model_name}\n(Macro AUC={macro_auc:.3f})", fontweight="bold")
-        ax.legend(loc="lower right")
-        ax.grid(True, alpha=0.3)
-
-    plt.suptitle("ROC Curves (One-vs-Rest)", fontsize=14, fontweight="bold", y=1.02)
-    plt.tight_layout()
-
-    if save_path:
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        plt.savefig(save_path, dpi=150, bbox_inches="tight")
-        print(f"Plot saved to {save_path}")
-
-    return fig, auc_dict
-
-
-def cross_validate_model(
-    model,
-    X: np.ndarray,
-    y: np.ndarray,
-    cv: int = 5,
-    scoring: str = "f1_macro",
-) -> dict:
+def cross_validate_model(model, X: np.ndarray, y: np.ndarray, cv: int = 5, scoring: str = "f1_macro"):
     """Run K-fold cross-validation and return mean/std of scores."""
     scores = cross_val_score(model, X, y, cv=cv, scoring=scoring, n_jobs=-1)
     return {
@@ -112,17 +48,7 @@ def cross_validate_model(
     }
 
 
-def plot_validation_curve(
-    model,
-    X: np.ndarray,
-    y: np.ndarray,
-    param_name: str,
-    param_range: list,
-    title: str = "Validation Curve",
-    scoring: str = "f1_macro",
-    cv: int = 5,
-    save_path: Optional[str] = None,
-) -> plt.Figure:
+def plot_validation_curve(model, X: np.ndarray, y: np.ndarray, param_name: str, param_range: list, title: str = "Validation Curve", scoring: str = "f1_macro", cv: int = 5, save_path: Optional[str] = None):
     """Plot validation curve for a hyperparameter."""
     train_scores, test_scores = validation_curve(
         model, X, y, param_name=param_name, param_range=param_range,
@@ -156,15 +82,7 @@ def plot_validation_curve(
     return fig
 
 
-def plot_learning_curve(
-    model,
-    X: np.ndarray,
-    y: np.ndarray,
-    title: str = "Learning Curve",
-    cv: int = 5,
-    scoring: str = "f1_macro",
-    save_path: Optional[str] = None,
-) -> plt.Figure:
+def plot_learning_curve(model, X: np.ndarray, y: np.ndarray, title: str = "Learning Curve", cv: int = 5, scoring: str = "f1_macro", save_path: Optional[str] = None):
     """Plot learning curve (training size vs score)."""
     train_sizes, train_scores, test_scores = learning_curve(
         model, X, y, cv=cv, scoring=scoring,
@@ -196,7 +114,7 @@ def plot_learning_curve(
     return fig
 
 
-def metrics_comparison_table(results: dict[str, dict]) -> pd.DataFrame:
+def metrics_comparison_table(results: dict[str, dict]):
     """Build a metrics comparison DataFrame from {model_name: metrics_dict}."""
     rows = []
     for name, metrics in results.items():
@@ -204,14 +122,7 @@ def metrics_comparison_table(results: dict[str, dict]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def tune_model(
-    model,
-    param_grid: dict,
-    X_train: np.ndarray,
-    y_train: np.ndarray,
-    cv: int = 5,
-    scoring: str = "f1_macro",
-) -> dict:
+def tune_model(model, param_grid: dict, X_train: np.ndarray, y_train: np.ndarray, cv: int = 5, scoring: str = "f1_macro"):
     """Tune model hyperparameters via GridSearchCV."""
     gs = GridSearchCV(
         model,
