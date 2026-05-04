@@ -220,35 +220,39 @@ We trained each classifier using default configurations from \texttt{prediction.
 
 \textbf{Multi-set evaluation.} Table~\ref{tab:nb04_metrics} reports accuracy and macro F1 across all evaluation sets. DT has the largest train-test gap, indicating overfitting. LR has the strongest held-out test macro F1 among the mandatory baselines and remains stable across train, validation, and test splits. Default RBF-SVM performs weakest by macro F1, suggesting that the default margin and kernel settings are not enough for the overlapping class structure.
 
-\begin{table}[H]
-\centering
-\caption{Baseline model performance (macro F1 across splits and test accuracy).}
-\label{tab:nb04_metrics}
-\begin{tabular}{@{}lcccc@{}}
-\toprule
-Model & Train F1 & Val F1 & Test F1 & Test Acc.\ \\
-\midrule
-Decision Tree & 0.8876 & 0.6693 & 0.6769 & 0.7139 \\
-Logistic Reg.\ & 0.7156 & 0.7070 & 0.7079 & 0.7410 \\
-SVM (RBF) & 0.6394 & 0.6166 & 0.6449 & 0.6867 \\
-\bottomrule
-\end{tabular}
-\end{table}
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}[c]{0.52\textwidth}
+        \centering
+        \captionof{table}{Baseline model performance (macro F1 across splits and test accuracy).}
+        \label{tab:nb04_metrics}
+        \resizebox{\linewidth}{!}{
+            \begin{tabular}{@{}lcccc@{}}
+            \toprule
+            Model & Train F1 & Val F1 & Test F1 & Test Acc.\ \\
+            \midrule
+            Decision Tree & 0.8876 & 0.6693 & 0.6769 & 0.7139 \\
+            Logistic Reg.\ & 0.7156 & 0.7070 & 0.7079 & 0.7410 \\
+            SVM (RBF) & 0.6394 & 0.6166 & 0.6449 & 0.6867 \\
+            \bottomrule
+            \end{tabular}
+        }
+    \end{minipage}\hfill
+    \begin{minipage}[c]{0.44\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../data/plots/04_confusion_matrix_lr_only.png}
+        \caption{Logistic Regression confusion matrix on the test set.}
+        \label{fig:cm_test}
+    \end{minipage}
+\end{figure}
 
 The per-class analysis shows that all models achieve the highest recall for Graduate and the lowest for Enrolled. This is consistent with the class imbalance and the transitional nature of enrolled students, who share feature characteristics with both Dropout and Graduate.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.65\linewidth]{../data/plots/04_confusion_matrix_lr_only.png}
-\caption{Logistic Regression confusion matrix on the test set. Enrolled students are most frequently misclassified (31.1\% total error), confirming the class overlap discussed in Section~2.2--2.3.}
-\label{fig:cm_test}
-\end{figure}
-
-\textbf{Error analysis.} The confusion matrix (Figure~\ref{fig:cm_test}) reveals the dominant error pattern: Graduate students are correctly identified with the highest recall (79.2\%), while Enrolled students show the lowest (68.9\%), with 23.9\% misclassified as Dropout and 19.3\% as Graduate. This confirms that Enrolled does not occupy a distinct decision region. The pattern aligns with the t-SNE visualization (Section~2.2) and clustering results (Section~2.3), where Enrolled points lie in the overlapping zone between the two more separable outcomes. The structural overlap between classes, beyond class imbalance alone, is a major source of classification difficulty.
+\textbf{Error analysis.} The confusion matrix (Figure~\ref{fig:cm_test}) reveals the dominant error pattern: Graduate students are correctly identified with the highest recall (79.2\%), while Enrolled students show the lowest (68.9\%), with 11.8\% misclassified as Dropout and 19.3\% as Graduate. This confirms that Enrolled does not occupy a distinct decision region. The pattern aligns with the t-SNE visualization (Section~2.2) and clustering results (Section~2.3), where Enrolled points lie in the overlapping zone between the two more separable outcomes. The structural overlap between classes, beyond class imbalance alone, is a major source of classification difficulty.
 
 \subsection{Evaluation and Model Choice}
 
-We evaluate the baseline models from three complementary perspectives: (1) held-out test performance via precision, recall, and F1; (2) ranking ability through One-vs-Rest ROC-AUC; and (3) robustness under cross-validation and hyperparameter variation. This section compares and tunes the three mandatory baseline models from Section~2.4. The overall final model choice is deferred to the open-ended exploration section, where ensemble methods are evaluated.
+We evaluate the baseline models from three complementary perspectives: (1) held-out test performance via precision, recall, and F1; (2) ranking ability through One-vs-Rest ROC-AUC; and (3) robustness under cross-validation and hyperparameter variation. This section compares and tunes the three mandatory baseline models from Section~2.4. The overall final model choice will be made in the open-ended exploration section, where ensemble methods are evaluated.
 
 We retrained the baseline models with explicit configurations and computed detailed precision, recall, and F1 metrics. We then applied One-vs-Rest ROC curves, cross-validation, validation curves, learning curves, and GridSearchCV hyperparameter tuning.
 
@@ -293,23 +297,25 @@ We retrained the baseline models with explicit configurations and computed detai
 
 \textbf{ROC curves and AUC.} Figure~\ref{fig:roc} compares macro-average ROC curves for all three baselines. LR achieves the highest macro AUC (0.890), followed by SVM (0.866) and DT (0.784).
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.7\linewidth]{../data/plots/05_roc_curves_combined.png}
-\caption{Macro-average ROC curves for all baseline models.}
-\label{fig:roc}
-\end{figure}
-
 \textbf{Cross-validation.} 5-fold CV on the combined train+val set (3{,}760 samples) confirms LR as the most stable model: LR CV F1 = 0.7028 $\pm$ 0.0073, DT = 0.6533 $\pm$ 0.0117, SVM = 0.6342 $\pm$ 0.0153.
 
 \textbf{Validation curve analysis} reveals model-specific sensitivity to hyperparameters. Figure~\ref{fig:valcurves_all} shows the two most informative curves: DT max\_depth exhibits classic overfitting (training score rises while validation drops), while SVM C shows that increasing regularization flexibility steadily improves both training and validation performance.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.48\linewidth]{../data/plots/05_valcurve_dt_depth_large.png}\hfill
-\includegraphics[width=0.48\linewidth]{../data/plots/05_valcurve_svm_C_large.png}
-\caption{Validation curves: DT max\_depth (left) shows overfitting; SVM C (right) shows improvement with larger C.}
-\label{fig:valcurves_all}
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}[c]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../data/plots/05_roc_curves_combined.png}
+        \caption{Macro-average ROC curves for all baseline models.}
+        \label{fig:roc}
+    \end{minipage}\hfill
+    \begin{minipage}[c]{0.66\textwidth}
+        \centering
+        \includegraphics[width=0.49\linewidth]{../data/plots/05_valcurve_dt_depth_large.png}\hfill
+        \includegraphics[width=0.49\linewidth]{../data/plots/05_valcurve_svm_C_large.png}
+        \caption{Validation curves: DT max\_depth (left) shows overfitting; SVM C (right) shows improvement with larger C.}
+        \label{fig:valcurves_all}
+    \end{minipage}
 \end{figure}
 
 LR is relatively insensitive to its regularization parameter C, suggesting the linear assumption is the primary bottleneck. SVM gamma (not shown) causes severe overfitting at high values; the optimal C and gamma must be tuned jointly.
@@ -325,7 +331,7 @@ LR is relatively insensitive to its regularization parameter C, suggesting the l
         \resizebox{\linewidth}{!}{
             \begin{tabular}{@{}lll@{}}
             \textbf{DT:} & \texttt{max\_depth=5, min\_samples\_split=2, min\_samples\_leaf=1} & (CV F1=0.6837) \\
-            \textbf{LR:} & \texttt{C=100, penalty='l1', solver='saga'} & (CV F1=0.7075) \\
+            \textbf{LR:} & \texttt{C=1, penalty='l1', solver='saga'} & (CV F1=0.7075) \\
             \textbf{SVM:} & \texttt{C=100, gamma='scale'} & (CV F1=0.6782) \\
             \end{tabular}
         }
@@ -448,29 +454,32 @@ RF achieves the highest mean CV macro F1 (0.7108), while GB provides a strong en
 
 Feature importance scores from the tuned Random Forest (Figure~\ref{fig:feature_importance}) confirm that academic performance metrics dominate prediction. The top-10 features are led by \texttt{overall\_approval\_rate} and \texttt{approval\_rate\_2nd}, followed by curricular unit metrics and semester grades.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.75\linewidth]{../data/plots/06_feature_importance_top10.png}
-\caption{Top-10 feature importances from the tuned Random Forest.}
-\label{fig:feature_importance}
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}[c]{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../data/plots/06_feature_importance_top10.png}
+        \caption{Top-10 feature importances from the tuned Random Forest.}
+        \label{fig:feature_importance}
+    \end{minipage}\hfill
+    \begin{minipage}[c]{0.46\textwidth}
+        \centering
+        \captionof{table}{Feature group ablation (5-fold CV, tuned RF).}
+        \label{tab:feature_ablation}
+        \resizebox{\linewidth}{!}{
+            \begin{tabular}{@{}lcc@{}}
+            \toprule
+            Feature Group & $n$ & CV F1 (Mean $\pm$ Std) \\
+            \midrule
+            Academic only & 20 & 0.6712 $\pm$ 0.0128 \\
+            Socioeconomic only & 20 & 0.5604 $\pm$ 0.0244 \\
+            All top-40 & 40 & 0.7173 $\pm$ 0.0094 \\
+            \bottomrule
+            \end{tabular}
+        }
+    \end{minipage}
 \end{figure}
-
 \textbf{Feature group ablation.} To quantify the relative contribution of different feature types, we partitioned the top-40 features into academic features (20 features: approval rates, grades, curricular unit metrics) and socioeconomic/demographic features (20 features: parental qualifications, economic indicators, application metadata). Table~\ref{tab:feature_ablation} shows the 5-fold CV results using the tuned RF.
-
-\begin{table}[H]
-\centering
-\caption{Feature group ablation (5-fold CV, tuned RF).}
-\label{tab:feature_ablation}
-\begin{tabular}{@{}lcc@{}}
-\toprule
-Feature Group & $n$ & CV F1 (Mean $\pm$ Std) \\
-\midrule
-Academic only & 20 & 0.6712 $\pm$ 0.0128 \\
-Socioeconomic only & 20 & 0.5604 $\pm$ 0.0244 \\
-All top-40 & 40 & 0.7173 $\pm$ 0.0094 \\
-\bottomrule
-\end{tabular}
-\end{table}
 
 Academic features alone account for the majority of predictive signal (F1 = 0.671), while socioeconomic features alone are substantially weaker (F1 = 0.560) with higher variance. Combining both groups yields the best and most stable performance (F1 = 0.717), confirming that secondary features provide complementary discriminative information beyond academic records alone.
 
@@ -485,40 +494,47 @@ Table~\ref{tab:all_models} presents the full comparison of all seven model confi
 
 Using held-out test macro F1 as the selection criterion, tuned RF is the final model with macro F1 = 0.7096. This result should be interpreted cautiously because LR is very close at 0.7079 and remains simpler and more interpretable. The practical conclusion is therefore not that RF dominates all baselines, but that ensemble tuning provides a small additional gain while preserving the broader finding that Enrolled is the primary classification challenge.
 
-\begin{table}[H]
-\centering
-\caption{Comprehensive comparison of all models on the test set.}
-\label{tab:all_models}
-\begin{tabular}{@{}lccc@{}}
-\toprule
-Model & Accuracy & F1 (macro) & F1 (weighted) \\
-\midrule
-Decision Tree & 0.7139 & 0.6769 & 0.7276 \\
-Logistic Regression & 0.7410 & 0.7079 & 0.7553 \\
-SVM (RBF) & 0.6867 & 0.6449 & 0.7005 \\
-RF (default) & 0.7696 & 0.6881 & 0.7552 \\
-GradientBoosting (default) & 0.7575 & 0.6910 & 0.7559 \\
-RF (tuned) & 0.7515 & \textbf{0.7096} & 0.7597 \\
-GradientBoosting (tuned) & \textbf{0.7726} & 0.7027 & \textbf{0.7657} \\
-\bottomrule
-\end{tabular}
-\end{table}
 
 \textbf{Per-class analysis of the final model.} Table~\ref{tab:per_class_final} compares per-class F1 for tuned RF and LR, both trained on the combined train+validation set for fair comparison. Tuned RF improves F1 across all three classes, with the largest gain on Graduate ($+$0.009) and modest gains on Dropout ($+$0.006) and Enrolled ($+$0.005). Enrolled remains the weakest class for both models (F1 $\approx$ 0.52), confirming that the primary prediction difficulty is structural overlap rather than model choice.
 
-\begin{table}[H]
-\centering
-\caption{Per-class F1 comparison: tuned RF vs.\ LR (both trained on train+val).}
-\label{tab:per_class_final}
-\begin{tabular}{@{}lccc@{}}
-\toprule
-Class & RF F1 & LR F1 & $\Delta$ \\
-\midrule
-Dropout & 0.767 & 0.761 & $+$0.006 \\
-Enrolled & 0.521 & 0.516 & $+$0.005 \\
-Graduate & 0.840 & 0.831 & $+$0.009 \\
-\bottomrule
-\end{tabular}
+\begin{table}[htbp]
+    \centering
+    \begin{minipage}[t]{0.54\textwidth}
+        \centering
+        \caption{Comprehensive comparison of all models on the test set.}
+        \label{tab:all_models}
+        \resizebox{\linewidth}{!}{
+            \begin{tabular}{@{}lccc@{}}
+            \toprule
+            Model & Accuracy & F1 (macro) & F1 (weighted) \\
+            \midrule
+            Decision Tree & 0.7139 & 0.6769 & 0.7276 \\
+            Logistic Regression & 0.7410 & 0.7079 & 0.7553 \\
+            SVM (RBF) & 0.6867 & 0.6449 & 0.7005 \\
+            RF (default) & 0.7696 & 0.6881 & 0.7552 \\
+            GradientBoosting (default) & 0.7575 & 0.6910 & 0.7559 \\
+            RF (tuned) & 0.7515 & \textbf{0.7096} & 0.7597 \\
+            GradientBoosting (tuned) & \textbf{0.7726} & 0.7027 & \textbf{0.7657} \\
+            \bottomrule
+            \end{tabular}
+        }
+    \end{minipage}\hfill
+    \begin{minipage}[t]{0.42\textwidth}
+        \centering
+        \caption{Per-class F1 comparison: tuned RF vs.\ LR (both trained on train+val).}
+        \label{tab:per_class_final}
+        \resizebox{\linewidth}{!}{
+            \begin{tabular}{@{}lccc@{}}
+            \toprule
+            Class & RF F1 & LR F1 & $\Delta$ \\
+            \midrule
+            Dropout & 0.767 & 0.761 & $+$0.006 \\
+            Enrolled & 0.521 & 0.516 & $+$0.005 \\
+            Graduate & 0.840 & 0.831 & $+$0.009 \\
+            \bottomrule
+            \end{tabular}
+        }
+    \end{minipage}
 \end{table}
 
 \textbf{Statistical significance.} A bootstrap analysis (10{,}000 iterations on the test set) yields a 95\% confidence interval for the macro F1 difference (RF $-$ LR) of [$-$0.018, $+$0.032] with $p = 0.30$, indicating that the observed advantage of tuned RF is not statistically significant. This reinforces the practical conclusion: the two models are effectively equivalent in predictive power, and the choice between them involves a trade-off between marginal F1 gain and model interpretability.
@@ -535,7 +551,7 @@ Graduate & 0.840 & 0.831 & $+$0.009 \\
     \item Enrolled remains the primary challenge because it is both a minority class and a structurally transitional outcome; class weighting improves recognition but cannot fully resolve the structural overlap with Dropout and Graduate.
 \end{itemize}
 
-\textbf{Limitations:} The small gap between tuned RF and LR suggests that future work should prioritize better modeling of Enrolled students and external validation, rather than treating a marginal macro F1 difference as a definitive deployment advantage. Our t-SNE-based decision boundary visualizations are approximations in 2D projected space and do not represent actual high-dimensional boundaries. Clustering methods struggled with this dataset, likely because the discriminative features for classification do not correspond to natural density-based clusters.
+\textbf{Limitations:} The small gap between tuned RF and LR suggests that future work should prioritize better modeling of Enrolled students and external validation, rather than treating a marginal macro F1 difference as a definitive deployment advantage. Our t-SNE-based decision boundary visualizations are approximations in 2D projected space and do not represent actual high-dimensional boundaries. Clustering methods generally struggled with this dataset, likely because the discriminative features for classification do not correspond to natural density-based clusters.
 
 \textbf{Future work:} Neural network architectures could capture more complex feature interactions; incorporating temporal data (e.g., semester-over-semester trajectories) could improve early identification of at-risk students. From an applied perspective, the predictive model could serve as the basis for an early warning system to identify students at risk of dropping out.
 
