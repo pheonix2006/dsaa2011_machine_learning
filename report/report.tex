@@ -77,7 +77,7 @@ The dataset contains 36 raw features that are categorized into four types: \text
 \label{fig:eda_feature_distributions}
 \end{figure}
 
-\paragraph{Feature engineering and selection.} We perform feature engineering to create 25 new domain-specific features based on the original 36 features, resulting in a total of 61 candidate features.
+\paragraph{Feature engineering and selection.} We performed feature engineering to create 25 new domain-specific features based on the original 36 features, resulting in a total of 61 candidate features.
 
 \paragraph{Data splitting and target encoding.} The dataset was split into training (70\%), validation (15\%), and test (15\%) sets using stratified sampling to maintain class proportions. Then OOF (Out-of-Fold) target encoding was applied to the nominal features using the training set to compute the mean target value for each category, which was then applied to the validation and test sets. This approach prevents data leakage while allowing us to capture the predictive signal from categorical features.
 
@@ -89,22 +89,26 @@ The dataset contains 36 raw features that are categorized into four types: \text
 
 We applied t-SNE to the engineered feature dataset to project the high-dimensional feature space into lower dimensions for visualization.
 
-A systematic pattern analysis across four perplexity values (Figure~\ref{fig:tsne_perplexity}) highlights the algorithm's sensitivity to local versus global structure. At a low perplexity ($p=5$), the projection is severely fragmented, which obscures meaningful global patterns. Conversely, a high perplexity ($p=50, 100$) over-smooths the global structure, causing a loss of local detail while significantly increasing computational expenditure.
+A systematic pattern analysis across four perplexity values 10, 20, 30, and 50 highlights the algorithm's sensitivity to local versus global structure, as shown in Figure~\ref{fig:tsne_perplexity}.
 
-Perplexity=30 achieves the optimal balance. The 2D projection (Figure~\ref{fig:tsne_perplexity}) reveals that Graduate students form a relatively compact region, while Dropout students cluster separately. Enrolled students are scattered between both groups, which is consistent with their transitional academic status. Furthermore, extending the projection from 2D to 3D (Figure~\ref{fig:tsne_3d}) provides additional spatial volume, further reducing the overlap between the distinct Graduate and Dropout clusters.
+At a low perplexity ($p=10$), the projection is severely fragmented. Higher perplexity values ($p=20, 30, 50$) produce similar stable global structures and the relative positions of the three classes remain consistent. However, high perplexity tends to over-smooth the local structure and concentrate points into denser clusters. Generally, perplexity 30 achieves the optimal balance. 
+
+The 2D projection reveals that Graduate and Dropout students form relatively compact clusters, while Enrolled students scattered between both groups and mostly overlap with the Graduate cluster, indicating that Enrolled students do not form a distinct cluster but rather occupy an intermediate region in the feature space. This pattern is consistent across all perplexity values, confirming that Enrolled students have transitional academic status. The overlapping nature of the Enrolled class suggests that it may be more challenging to classify them accurately based on the engineered features or clustering alone.
+
+Furthermore, extending the projection from 2D to 3D (Figure~\ref{fig:tsne_3d}) provides additional spatial volume, further reducing the overlap between the distinct Graduate and Dropout clusters.
 
 \begin{figure}[htbp]
     \centering
-    \begin{minipage}[c]{0.48\textwidth}
+    \begin{minipage}[c]{0.6\textwidth}
         \centering
         \includegraphics[width=\linewidth]{../data/plots/03_tsne_2d_perplexity_comparison.png}
-        \caption{t-SNE 2D projections at perplexity = 5, 30, 50, 100.}
+        \caption{t-SNE 2D projections at perplexity 10, 20, 30, 50.}
         \label{fig:tsne_perplexity}
     \end{minipage}\hfill
-    \begin{minipage}[c]{0.4\textwidth}
+    \begin{minipage}[c]{0.35\textwidth}
         \centering
         \includegraphics[width=\linewidth]{../data/plots/05_tsne_3d_best.png}
-        \caption{t-SNE 3D projection at perplexity=30.}
+        \caption{t-SNE 3D projection at perplexity 30.}
         \label{fig:tsne_3d}
     \end{minipage}
 \end{figure}

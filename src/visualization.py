@@ -44,12 +44,12 @@ def plot_tsne_2d(embedding: np.ndarray, labels: np.ndarray, perplexity: int = 30
             embedding[mask, 0], embedding[mask, 1],
             c=CLASS_COLORS.get(int(label), "#999999"),
             label=CLASS_NAMES.get(int(label), str(label)),
-            alpha=0.6, s=10,
+            alpha=0.6, s=8,
         )
 
-    ax.set_title(f"t-SNE Projection (perplexity={perplexity})", fontweight="bold")
-    ax.set_xlabel("t-SNE Dimension 1")
-    ax.set_ylabel("t-SNE Dimension 2")
+    ax.set_title(f"t-SNE Projection (p={perplexity})", fontweight="bold", fontsize=16, pad=10)
+    ax.set_xlabel("Dimension 1", fontsize=14)
+    ax.set_ylabel("Dimension 2", fontsize=14)
 
     if show_legend:
         ax.legend(title="Class", markerscale=3, fontsize=10)
@@ -63,38 +63,6 @@ def plot_tsne_2d(embedding: np.ndarray, labels: np.ndarray, perplexity: int = 30
         plt.tight_layout()
 
     return ax
-
-
-# 3D Scatter Plot
-
-def plot_tsne_3d(embedding: np.ndarray, labels: np.ndarray, perplexity: int = 30, save_path: Optional[str] = None):
-    """Plot 3D t-SNE scatter plot colored by class."""
-    fig = plt.figure(figsize=(12, 9))
-    ax = fig.add_subplot(111, projection="3d")
-
-    for label in sorted(np.unique(labels)):
-        mask = labels == label
-        ax.scatter(
-            embedding[mask, 0], embedding[mask, 1], embedding[mask, 2],
-            c=CLASS_COLORS.get(int(label), "#999999"),
-            label=CLASS_NAMES.get(int(label), str(label)),
-            alpha=0.6, s=10,
-        )
-
-    ax.set_title(f"3D t-SNE Projection (perplexity={perplexity})", fontweight="bold")
-    ax.set_xlabel("t-SNE Dim 1")
-    ax.set_ylabel("t-SNE Dim 2")
-    ax.set_zlabel("t-SNE Dim 3")
-    ax.legend(title="Class", markerscale=3, fontsize=10)
-
-    if save_path:
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        plt.savefig(save_path, dpi=150, bbox_inches="tight")
-        print(f"Plot saved to {save_path}")
-
-    plt.tight_layout()
-    return fig
-
 
 # Perplexity Comparison
 
@@ -120,7 +88,7 @@ def plot_perplexity_comparison(results: dict[int, np.ndarray], labels: np.ndarra
         row, col = idx // cols, idx % cols
         axes[row, col].set_visible(False)
 
-    plt.suptitle("t-SNE: Perplexity Comparison", fontweight="bold", y=1.02)
+    plt.suptitle("2D t-SNE Perplexity Comparison", fontweight="bold", y=1.0, fontsize=20)
 
     if save_path:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
@@ -129,3 +97,35 @@ def plot_perplexity_comparison(results: dict[int, np.ndarray], labels: np.ndarra
 
     plt.tight_layout()
     return fig
+
+# 3D Scatter Plot
+
+def plot_tsne_3d(embedding: np.ndarray, labels: np.ndarray, perplexity: int = 30, save_path: Optional[str] = None):
+    """Plot 3D t-SNE scatter plot colored by class."""
+    fig = plt.figure(figsize=(8, 8))
+    ax = fig.add_subplot(111, projection="3d")
+
+    for label in sorted(np.unique(labels)):
+        mask = labels == label
+        ax.scatter(
+            embedding[mask, 0], embedding[mask, 1], embedding[mask, 2],
+            c=CLASS_COLORS.get(int(label), "#999999"),
+            label=CLASS_NAMES.get(int(label), str(label)),
+            alpha=0.6, s=10,
+        )
+
+    ax.set_title(f"3D t-SNE Projection (p={perplexity})", fontweight="bold", fontsize=16, pad=10)
+    ax.set_xlabel("Dim 1")
+    ax.set_ylabel("Dim 2")
+    ax.set_zlabel("Dim 3")
+    ax.legend(title="Class", markerscale=3, fontsize=10)
+
+    if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path, dpi=150, bbox_inches="tight")
+        print(f"Plot saved to {save_path}")
+
+    plt.tight_layout()
+    return fig
+
+
