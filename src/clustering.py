@@ -36,38 +36,6 @@ CLUSTER_COLORS = [
 ]
 
 
-# Clustering Algorithms
-
-def apply_kmeans(X: np.ndarray, n_clusters: int, random_state: int = 42):
-    """Apply K-Means clustering and return labels and model."""
-    model = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=10, algorithm="lloyd")
-    labels = model.fit_predict(X)
-    return labels, model
-
-
-def apply_agglomerative(X: np.ndarray, n_clusters: int, linkage: str = "ward"):
-    """Apply Agglomerative Hierarchical Clustering and return labels and model."""
-    model = AgglomerativeClustering(n_clusters=n_clusters, linkage=linkage)
-    labels = model.fit_predict(X)
-    return labels, model
-
-
-def apply_dbscan(X: np.ndarray, eps: float = 0.5, min_samples: int = 5):
-    """Apply DBSCAN clustering and return labels and model."""
-    model = DBSCAN(eps=eps, min_samples=min_samples)
-    labels = model.fit_predict(X)
-    return labels, model
-
-
-def apply_gmm(X: np.ndarray, n_components: int, covariance_type: str = "full", random_state: int = 42, n_init: int = 5):
-    """Apply Gaussian Mixture Model clustering and return labels, model, and probabilities."""
-    model = GaussianMixture(n_components=n_components, covariance_type=covariance_type, random_state=random_state, n_init=n_init)
-    model.fit(X)
-    labels = model.predict(X)
-    probs = model.predict_proba(X)
-    return labels, model, probs
-
-
 # Cluster Evaluation Metrics
 
 def evaluate_clustering(X: np.ndarray, labels: np.ndarray, y_true: Optional[np.ndarray] = None):
@@ -152,11 +120,12 @@ def plot_cluster_scatter(X_2d: np.ndarray, labels: np.ndarray, title: str, y_tru
                 linewidth=1.0, s=30, alpha=0.3,
             )
 
-    ax.set_title(title, fontweight="bold")
-    ax.set_xlabel("Dimension 1")
-    ax.set_ylabel("Dimension 2")
+    ax.set_title(title, fontweight="bold", fontsize=18)
+    ax.set_xlabel("Dimension 1", fontsize=14)
+    ax.set_ylabel("Dimension 2", fontsize=14)
     if show_legend:
-        ax.legend(title="Cluster", markerscale=2, fontsize=9)
+        ax.legend(title="Cluster", markerscale=2, fontsize=11)
+    ax.tick_params(labelsize=11)
 
     if own_ax and save_path:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
@@ -208,12 +177,13 @@ def plot_algorithm_comparison(all_results: dict[str, dict[str, float]], y_true: 
         bars[best_idx].set_linewidth(3)
 
         ax.set_xticks(x_pos)
-        ax.set_xticklabels(algorithms, rotation=30, ha="right")
-        ax.set_title(titles.get(metric, metric), fontweight="bold")
-        ax.set_ylabel("Score")
+        ax.set_xticklabels(algorithms, rotation=30, ha="right", fontsize=11)
+        ax.set_title(titles.get(metric, metric), fontweight="bold", fontsize=13)
+        ax.set_ylabel("Score", fontsize=12)
         ax.grid(True, alpha=0.3, axis="y")
+        ax.tick_params(labelsize=11)
 
-    plt.suptitle("Clustering Algorithm Comparison", fontweight="bold", y=1.02)
+    plt.suptitle("Clustering Algorithm Comparison", fontweight="bold", y=1.02, fontsize=15)
     plt.tight_layout()
 
     if save_path:
@@ -230,9 +200,10 @@ def plot_elbow_method(results: dict[int, dict[str, float]], save_path: Optional[
     inertias = [results[k]["inertia"] for k in ks]
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot(ks, inertias, "o-", color="#3498db")
-    ax.set_xlabel("Number of clusters (k)")
-    ax.set_ylabel("Inertia")
-    ax.set_title("K-Means Elbow Method", fontweight="bold")
+    ax.set_xlabel("Number of clusters (k)", fontsize=12)
+    ax.set_ylabel("Inertia", fontsize=12)
+    ax.set_title("K-Means Elbow Method", fontweight="bold", fontsize=14)
+    ax.tick_params(labelsize=11)
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
     if save_path:
@@ -246,9 +217,10 @@ def plot_cluster_size_distribution(labels: np.ndarray, title: str, save_path: Op
     counts = pd.Series(labels).value_counts().sort_index()
     fig, ax = plt.subplots(figsize=(8, 5))
     counts.plot.bar(ax=ax, color="#3498db", edgecolor="white")
-    ax.set_xlabel("Cluster")
-    ax.set_ylabel("Samples")
-    ax.set_title(title, fontweight="bold")
+    ax.set_xlabel("Cluster", fontsize=12)
+    ax.set_ylabel("Samples", fontsize=12)
+    ax.set_title(title, fontweight="bold", fontsize=14)
+    ax.tick_params(labelsize=11)
     ax.grid(True, alpha=0.3, axis="y")
     plt.tight_layout()
     if save_path:
@@ -270,15 +242,16 @@ def plot_dendrogram(X: np.ndarray, method: str = "ward", max_d: Optional[float] 
         truncate_mode="lastp",
         p=30,
         leaf_rotation=90,
-        leaf_font_size=9,
+        leaf_font_size=10,
         ax=ax,
     )
     if max_d is not None:
         ax.axhline(y=max_d, color="r", linestyle="--", label=f"Cut at d={max_d}")
         ax.legend()
-    ax.set_title(f"Hierarchical Clustering Dendrogram ({method} linkage)", fontweight="bold")
-    ax.set_xlabel("Sample Index (or Cluster Size)")
-    ax.set_ylabel("Distance")
+    ax.set_title(f"Hierarchical Clustering Dendrogram ({method} linkage)", fontweight="bold", fontsize=18)
+    ax.set_xlabel("Sample Index (or Cluster Size)", fontsize=12)
+    ax.set_ylabel("Distance", fontsize=12)
+    ax.tick_params(labelsize=11)
     ax.grid(True, alpha=0.3, axis="y")
     plt.tight_layout()
 
