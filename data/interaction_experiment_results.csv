@@ -1,7 +1,7 @@
 setting,k,n_features,cv_f1_mean,cv_f1_std,test_f1_macro
-baseline_no_interactions,40,40,0.7142,0.0073,0.7064
-with_interactions,40,40,0.695,0.0095,0.674
-with_interactions,50,50,0.7037,0.0112,0.6974
-with_interactions,60,60,0.7072,0.0132,0.6999
-with_interactions,70,70,0.7083,0.01,0.7044
-with_interactions,85,85,0.7116,0.0096,0.6905
+baseline_no_interactions,40,40,0.7142,0.0073,0.3163
+with_interactions,40,40,0.695,0.0095,0.3258
+with_interactions,50,50,0.7037,0.0112,0.3174
+with_interactions,60,60,0.7072,0.0132,0.313
+with_interactions,70,70,0.7083,0.01,0.3077
+with_interactions,85,85,0.7116,0.0096,0.3191

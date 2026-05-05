@@ -1,26 +1,26 @@
 {
   "lr_bias_f1": {
-    "point": 0.7228,
+    "point": 0.3112,
     "ci_95": [
-      0.6868,
-      0.7576
+      0.2755,
+      0.3464
     ]
   },
   "lr_f1": {
-    "point": 0.7102,
+    "point": 0.3161,
     "ci_95": [
-      0.6741,
-      0.7451
+      0.28,
+      0.3519
     ]
   },
   "difference": {
-    "point": 0.0126,
+    "point": -0.0049,
     "ci_95": [
-      -0.0026,
-      0.0278
+      -0.0223,
+      0.0113
     ]
   },
-  "p_value_lr_ge_lr_bias": 0.051,
+  "p_value_lr_ge_lr_bias": 0.7153,
   "n_bootstrap": 10000,
-  "interpretation": "No significant difference at 95% level (CI spans zero: [-0.0026, 0.0278], p=0.0510). The observed difference of +0.0126 could be due to sampling variability."
+  "interpretation": "No significant difference at 95% level (CI spans zero: [-0.0223, 0.0113], p=0.7153). The observed difference of -0.0049 could be due to sampling variability."
 }
