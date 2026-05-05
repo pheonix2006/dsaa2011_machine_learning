@@ -17,9 +17,9 @@
 
 \title{Student Dropout Prediction: A Machine Learning Analysis}
 \subtitle{DSAA2011(L01) Course Project - HKUST(GZ) 2026 Spring}
-\author{member1, member2, mumber3, mumber4}
+\author{Hao LUO, Congren HANG, Xingjian LI, Ruoxi WANG}
 \date{Date: 7 May 2026}
-\institute{Group ID}
+\institute{Group 9}
 
 \setbeamertemplate{frametitle}{\vspace*{0.5cm}\color{mainblue}\insertframetitle}
 \setbeamertemplate{navigation symbols}{}
@@ -35,9 +35,113 @@
 \frametitle{Part A}
 \end{frame}
 
-\section{Part B}
+\section{Clustering Analysis}
+
 \begin{frame}
-\frametitle{Part B}
+\frametitle{Clustering (1/2): Algorithm Selection \& Tuning}
+
+\begin{columns}[T]
+
+    \begin{column}{0.48\textwidth}
+        \vspace{0.2cm}
+        {\large \textbf{\textcolor{mainblue}{1. Hard-Boundary Models}}}
+        \vspace{0.2cm}
+        \begin{itemize}
+            \footnotesize
+            \setlength{\itemsep}{6pt} 
+            \item \textbf{Exploration:} Tested Hierarchical (Ward) and K-Means.
+            \item \textbf{Optimal K:} $K=4$ provided the best granularity.
+            \item \textbf{Limitation:} While K-Means performed well, rigid spherical boundaries are less flexible in handling the severe structural overlap of the "Enrolled" class.
+        \end{itemize}
+        
+        \vspace{0.6cm}
+        \textit{\textcolor{darkgray}{$\Rightarrow$ Conclusion: A probabilistic approach is needed to handle the overlap.}}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+        \vspace{0.2cm}
+        {\large \textbf{\textcolor{mainblue}{2. Final Selection: GMM}}}
+        \vspace{0.2cm}
+        \begin{itemize}
+            \footnotesize
+            \setlength{\itemsep}{6pt}
+            \item \textbf{Best Config:} $K=4$ with \textbf{Tied Covariance}. 
+            \item \textbf{Why GMM?} Soft-assignments handled overlap naturally; "Tied" covariance reduced 40D overfitting.
+        \end{itemize}
+        
+        \vspace{0.4cm}
+        
+        \begin{center}
+            \textbf{Performance Comparison ($K=4$)} \\
+            \vspace{0.2cm}
+            \resizebox{0.9\textwidth}{!}{
+            \renewcommand{\arraystretch}{1.3} 
+            \begin{tabular}{lcc}
+            \hline
+            \textbf{Algorithm} & \textbf{ARI} & \textbf{NMI} \\ \hline
+            Hierarchical (Ward) & 0.153 & 0.149 \\
+            K-Means & 0.313 & 0.230 \\
+            \textbf{GMM} (Tied) & \textbf{0.334} & \textbf{0.273} \\ \hline
+            \end{tabular}
+            }
+        \end{center}
+    \end{column}
+
+\end{columns}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Clustering (2/2): Core Insight \& Visualizations}
+
+\vspace{-0.1cm}
+{\large \textbf{\textcolor{mainblue}{Insight: Natural Label Consistency}}}
+\begin{itemize}
+    \footnotesize
+    \setlength{\itemsep}{2pt}
+    \item \textbf{Consistency:} Clustering results seem to be basically consistent with true labels. 
+    \item \textbf{Ablation Check:} Removing target-encoded features yielded identical structures. 
+\end{itemize}
+
+\vspace{0.2cm}
+\rule{\textwidth}{0.4pt}
+
+
+\begin{columns}[T]
+
+    \begin{column}{0.25\textwidth}
+        \centering
+        \scriptsize \textbf{Original Labels} \\
+        \vspace{0.1cm}
+        \includegraphics[width=\textwidth, height=0.45\textheight, keepaspectratio]{../data/plots/02_tsne_2d_perplexity_best.png}
+    \end{column}
+    
+    % 图2：层次聚类
+    \begin{column}{0.25\textwidth}
+        \centering
+        \scriptsize \textbf{Hierarchical (Ward)} \\
+        \vspace{0.1cm}
+        \includegraphics[width=\textwidth, height=0.45\textheight, keepaspectratio]{../data/plots/03_hierarchical_clusters_tsne.png} 
+    \end{column}
+    
+    % 图3：K-Means
+    \begin{column}{0.25\textwidth}
+        \centering
+        \scriptsize \textbf{K-Means ($K=4$)} \\
+        \vspace{0.1cm}
+        \includegraphics[width=\textwidth, height=0.45\textheight, keepaspectratio]{../data/plots/03_kmeans_clusters_tsne.png} 
+    \end{column}
+
+    % 图4：GMM
+    \begin{column}{0.25\textwidth}
+        \centering
+        \scriptsize \textbf{GMM (Tied)} \\
+        \vspace{0.1cm}
+        \includegraphics[width=\textwidth, height=0.45\textheight, keepaspectratio]{../data/plots/03_gmm_clusters_tsne.png} 
+    \end{column}
+
+\end{columns}
+
 \end{frame}
 
 \section{Part C}
@@ -59,16 +163,6 @@
 Realhino, V., et al. (2022).  Student Dropout and Academic Success.  UCI Machine Learning Repository. 
 https://doi.org/10.24432/C5MC89
 
-\bibitem{pedregosa2011}
-Pedregosa, F., et al. (2011). Scikit-learn: Machine Learning in Python. JMLR, 12, pp. 2825–2830.
-
-\bibitem{vandermaaten2008}
-Van der Maaten, L. and Hinton, G. (2008). Visualizing Data using t-SNE. JMLR, 9, pp. 2579–2605.
-
-\bibitem{claude2024}
-Claude by Anthropic (Claude Opus 4) was used for code debugging, visualization code generation, and 
-report language polishing, accounting for less than 30\% of total project effort. All core ML implementations 
-are original student work.
 
 \end{thebibliography}
 \end{frame}
