@@ -64,6 +64,50 @@ def plot_tsne_2d(embedding: np.ndarray, labels: np.ndarray, perplexity: int = 30
 
     return ax
 
+
+
+def plot_tsne_2d_multi(embedding: np.ndarray, labels: np.ndarray, perplexity: int = 30, title: Optional[str] = None, save_path: Optional[str] = None, ax: Optional[plt.Axes] = None, show_legend: bool = True):
+    """Plot 2D t-SNE scatter plot colored by arbitrary class/cluster labels."""
+    own_ax = ax is None
+    if own_ax:
+        fig, ax = plt.subplots(figsize=(10, 8))
+
+    unique_labels = np.unique(labels)
+    # Use a color map for more than 3 classes
+    import matplotlib.cm as cm
+    color_map = cm.get_cmap('tab10', len(unique_labels))
+
+    for i, label in enumerate(sorted(unique_labels)):
+        mask = labels == label
+        color = color_map(i)
+        ax.scatter(
+            embedding[mask, 0], embedding[mask, 1],
+            c=[color],
+            label=str(label),
+            alpha=0.6, s=8,
+        )
+
+    if title:
+        ax.set_title(title, fontweight="bold", fontsize=16, pad=10)
+    else:
+        ax.set_title(f"t-SNE Projection (p={perplexity})", fontweight="bold", fontsize=16, pad=10)
+    ax.set_xlabel("Dimension 1", fontsize=14)
+    ax.set_ylabel("Dimension 2", fontsize=14)
+
+    if show_legend:
+        ax.legend(title="Class", markerscale=3, fontsize=10)
+
+    if own_ax and save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path, dpi=150, bbox_inches="tight")
+        print(f"Plot saved to {save_path}")
+
+    if own_ax:
+        plt.tight_layout()
+
+    return ax
+
+
 # Perplexity Comparison
 
 def plot_perplexity_comparison(results: dict[int, np.ndarray], labels: np.ndarray, save_path: Optional[str] = None):

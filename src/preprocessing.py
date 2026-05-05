@@ -130,38 +130,35 @@ def load_data(data_dir: str = "data"):
 
 # Standardization
 
-def standardize_features(
-    X: pd.DataFrame,
-    feature_types: Optional[dict[str, list[str]]] = None,
-    fit: bool = True,
-    scaler: Optional[StandardScaler] = None,
-):
-    """Standardize continuous and count features while preserving binary indicators."""
-    df = X.copy()
-    feature_types = feature_types or get_feature_types(df)
-    scale_cols = [
-        c
-        for c in feature_types.get("continuous", []) + feature_types.get("count", [])
-        if c in df.columns
-    ]
+# def standardize_features(
+#     X: pd.DataFrame,
+#     fit: bool = True,
+#     scaler: Optional[StandardScaler] = None,
+# ):
+#     """Standardize all numeric columns except binary (0/1)."""
+#     df = X.copy()
+#     # Identify numeric columns
+#     numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+#     # Exclude binary columns (all values in {0, 1})
+#     scale_cols = [col for col in numeric_cols if not set(df[col].dropna().unique()).issubset({0, 1})]
 
-    if not scale_cols:
-        return df, scaler
+#     if not scale_cols:
+#         return df, scaler
 
-    if fit:
-        scaler = StandardScaler()
-        scaled_values = scaler.fit_transform(df[scale_cols])
-        mode = "fit"
-    else:
-        if scaler is None:
-            raise ValueError("scaler must be provided when fit=False")
-        scaled_values = scaler.transform(df[scale_cols])
-        mode = "transform"
+#     if fit:
+#         scaler = StandardScaler()
+#         scaled_values = scaler.fit_transform(df[scale_cols])
+#         mode = "fit"
+#     else:
+#         if scaler is None:
+#             raise ValueError("scaler must be provided when fit=False")
+#         scaled_values = scaler.transform(df[scale_cols])
+#         mode = "transform"
 
-    df = df.astype({col: float for col in scale_cols})
-    df.loc[:, scale_cols] = scaled_values
-    print(f"Standardized {len(scale_cols)} numerical features ({mode}).")
-    return df, scaler
+#     df = df.astype({col: float for col in scale_cols})
+#     df.loc[:, scale_cols] = scaled_values
+#     print(f"Standardized {len(scale_cols)} numeric features (excluding binary) ({mode}).")
+#     return df, scaler
 
 
 def standardize_feature_splits(
