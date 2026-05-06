@@ -82,8 +82,6 @@ The dataset contains 36 raw features that are categorized into four types: \text
 
 \paragraph{Feature standardization, selection, and output.} A Random Forest selected the top 40 target-encoded features by importance. Non-binary selected features were standardized using training-set statistics only; binary indicators remained 0/1, and the fitted scaler was reused for validation and test sets.
 
-
-
 \subsection{Data Visualization (t-SNE)}
 
 We applied t-SNE to the engineered feature dataset to project the high-dimensional feature space into lower dimensions for visualization.
@@ -114,74 +112,60 @@ Furthermore, extending the projection from 2D to 3D (Figure~\ref{fig:tsne_3d}) p
 
 \subsection{Clustering Analysis}
 
-We applied three clustering algorithms to the engineered top-40 feature space: K-Means, Agglomerative Hierarchical Clustering, and Gaussian Mixture Models (GMM). DBSCAN and OPTICS were explored but failed: DBSCAN classified 100\% of points as noise across all \texttt{eps} values (0.3--1.5), and OPTICS with xi-based extraction consistently returned only one cluster. Both failures stem from the curse of dimensionality --- in 40 dimensions all pairwise distances become similar (coefficient of variation = 0.32), making density-based methods unable to identify dense regions. PCA was used for visualization as it is stable and distance-consistent.
+\subsubsection{Algorithm Exploration and Comparison}
 
-\textbf{K-Means K-Value Exploration:} We tested K=3,4,5,6. Although K=3 matches the number of target classes, K=4 nearly doubled the ARI from 0.171 to 0.313 (Table~\ref{tab:kmeans_k_comparison}), suggesting that target-encoded features benefit from finer cluster granularity. K=4 was selected for detailed analysis.
+We applied three clustering algorithms to the engineered feature dataset: K-Means, Agglomerative Hierarchical Clustering, and Gaussian Mixture Models (GMM). 2D t-SNE projections with perplexity 30 were used for visualization, which can be compared with the original t-SNE visualization (Figure~\ref{fig:tsne_perplexity}) to assess how well the clusters align with the underlying structure (true label) of the data.
 
-\begin{table}[H]
+\paragraph{K-Means K-Value Exploration.} We tested $K=3,4,\ldots,19$. $K=4$ achieved the best ARI of 0.2313; $K=5$ achieved the best DB index of 2.2165; but other metrics favored $K=3$ and monotonically worsened with larger $K$. The detailed metrics for $K=3,4,5,6$ are shown in Table~\ref{tab:kmeans_k_comparison}.
+
+
+\paragraph{Hierarchical Clustering.} We first compared four linkage methods with $K=3$ to identify the best-performing method, then explored $K$ values for that method. The ARI results show that ward linkage significantly outperforms complete, average, and single linkages which produce degenerate partitions with ARI close to zero. 
+
+K-value exploration with Ward linkage showed similar patterns to K-Means: ARI peaked at K=3 (0.1332), Silhouette and DB index favored K=4, and the overall pattern of worsening metrics with larger K values. Detailed metrics for Ward linkage with $K=3,4,5,6$ are shown in Table~\ref{tab:hierarchical_k_comparison}.
+
+\begin{figure}[htbp]
 \centering
-\caption{K-Means K-value exploration on engineered features.}
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\captionof{table}{K-Means K-value exploration on engineered features.}
 \label{tab:kmeans_k_comparison}
-\resizebox{0.85\linewidth}{!}{
+\resizebox{\linewidth}{!}{
 \begin{tabular}{@{}lcccccc@{}}
 \toprule
 K & Silhouette & CH Index & DB Index & ARI & NMI \\ \midrule
-3 & 0.2741 & 839.73 & 1.5640 & 0.1708 & 0.1757 \\
-4 & 0.1704 & 719.87 & 2.0741 & \textbf{0.3129} & \textbf{0.2299} \\
-5 & 0.1690 & 625.90 & 1.9093 & 0.3052 & 0.2213 \\
-6 & 0.1243 & 566.57 & 1.9614 & 0.2061 & 0.1861 \\ \bottomrule
+3 & 0.1301 & \textbf{848.80} & 1.5689 & \textbf{0.2722} & 0.1198 \\
+4 & \textbf{0.2313} & 729.24 & \textbf{2.0620} & 0.1734 & \textbf{0.1559} \\
+5 & 0.2004 & 629.19 & 2.2165 & 0.1422 & 0.1486 \\
+6 & 0.1544 & 576.00 & 1.9510 & 0.1246 & 0.1306 \\ \bottomrule
 \end{tabular}
 }
-\end{table}
-
-\textbf{Hierarchical Clustering:} We first compared four linkage methods with K=3 (Table~\ref{tab:linkage_comparison}). Ward linkage achieved the highest ARI (0.175) by far, while single and average linkages produced degenerate partitions (ARI $\approx$ 0). K-value exploration with Ward linkage confirmed K=3 as optimal; larger K values did not improve ARI. The dendrogram (Figure~\ref{fig:dendrogram}) shows a relatively flat merge structure.
-
-\begin{figure}[htbp]
-    \centering
-    \begin{minipage}[c]{0.46\textwidth}
-        \centering
-        \includegraphics[width=\linewidth]{../data/plots/03_dendrogram_ward.png}
-        \caption{Hierarchical clustering dendrogram (Ward linkage).}
-        \label{fig:dendrogram}
-    \end{minipage}\hfill
-    \begin{minipage}[c]{0.50\textwidth}
-        \centering
-        \captionof{table}{Linkage methods comparison (K=3).}
-        \label{tab:linkage_comparison}
-        \resizebox{\linewidth}{!}{
-            \begin{tabular}{@{}lcccc@{}}
-            \toprule
-            Method & Silhouette & CH Index & DB Index & ARI \\ \midrule
-            Ward & 0.2436 & 725.18 & 1.7059 & \textbf{0.1750} \\
-            Complete & 0.2256 & 214.30 & 1.6389 & $-$0.0095 \\
-            Average & 0.5374 & 22.10 & 0.7102 & 0.0009 \\
-            Single & 0.5290 & 7.49 & 0.3460 & 0.0002 \\ \bottomrule
-            \end{tabular}
-        }
-    \end{minipage}
-\end{figure}
-
-\textbf{GMM K-Value and Covariance Exploration:} We tested K=3,4,5,6 combined with four covariance types (full, tied, diag, spherical). The tied covariance structure performed best, and K=4 achieved the overall best ARI of 0.334 (Table~\ref{tab:gmm_cov_comparison}). This confirms that allowing all clusters to share the same covariance shape reduces overfitting in the 40-dimensional space while still capturing cluster differences through means.
-
-\begin{table}[H]
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
 \centering
-\caption{GMM covariance and K exploration (best configurations).}
-\label{tab:gmm_cov_comparison}
-\resizebox{0.9\linewidth}{!}{
+\captionof{table}{Hierarchical Clustering K-value exploration (Ward linkage).}
+\label{tab:hierarchical_k_comparison}
+\resizebox{\linewidth}{!}{
 \begin{tabular}{@{}lcccccc@{}}
 \toprule
-K & Covariance & Silhouette & CH Index & DB Index & ARI & NMI \\ \midrule
-3 & tied & 0.1510 & 741.35 & 2.4022 & 0.3324 & 0.2578 \\
-3 & diag & 0.1670 & 712.43 & 2.7407 & 0.3334 & 0.2505 \\
-4 & tied & 0.1423 & 559.91 & 2.2580 & \textbf{0.3336} & \textbf{0.2734} \\
-4 & diag & 0.1627 & 664.36 & 2.3042 & 0.3213 & 0.2348 \\ \bottomrule
+K & Silhouette & CH Index & DB Index & ARI & NMI \\ \midrule
+3 & 0.2538 & \textbf{772.45} & 1.6391 & \textbf{0.1332} & \textbf{0.1187} \\
+4 & \textbf{0.2650} & 651.54 & 1.8610 & 0.1176 & 0.1113 \\
+5 & 0.2539 & 563.06 & 1.5257 & 0.1149 & 0.1098 \\
+6 & 0.1226 & 513.87 & \textbf{1.9085} & 0.0898 & 0.0932 \\ \bottomrule
 \end{tabular}
 }
-\end{table}
+\end{minipage}
+\end{figure}
 
-\textbf{Overall Algorithm Comparison:} Table~\ref{tab:clustering_comparison} summarizes all three algorithms with their optimal configurations. GMM (K=4, tied) leads in both ARI (0.334) and NMI (0.273), substantially outperforming K-Means and Hierarchical clustering. Only GMM produces dropout-dominant clusters (Table~\ref{tab:cluster_dominant}); K-Means K=4 and Hierarchical produce graduate-dominant clusters, indicating that soft probabilistic boundaries better capture the structural overlap between Dropout and Graduate. Figure~\ref{fig:cluster_visualization} visualizes the three partitions on a 2D PCA projection.
+\paragraph{GMM K-Value and Covariance Exploration.} We tested $K=3,4,5,6$ combined with four covariance types (full, tied, diag, spherical). Although $K=3$ with diag covariance achieved the best ARI $0.2502$, $K=4$ with tied covariance achieved a better Silhouette and close metric values. For consistency with the other algorithms, we selected $K=4$ with tied covariance as the best GMM configuration. 
 
-\begin{table}[H]
+\textbf{Overall Algorithm Comparison:} Table~\ref{tab:clustering_comparison} summarizes all three algorithms with their optimal configurations. GMM (K=4, tied) leads in ARI (0.2270), NMI (0.1597) and DB Index (2.1498). However, the gap of the metrics among the three algorithms is minor, and overall performance is modest across all algorithms. This may suggest that the global clustering structure of the dataset is relatively strong and stable, leading to similar partitions across different algorithms, but the structural overlap between classes (especially Enrolled) limits the maximum achievable ARI and NMI.
+
+Figure~\ref{fig:cluster_visualization} shows the cluster assignments of the three algorithms and true labels on the 2D t-SNE projection. K-Means produces compact clusters but with significant label mixing, while the results of Hierarchical clustering and GMM show more mixing and overlap patterns between the clusters. Nevertheless, all three algorithms capture similar global structures that is highly consistent with the true labels, with one cluster dominated by Graduate students, one cluster dominated by Dropout students, and one cluster that is a mixture of Enrolled and other classes. 
+
+However, this observed consistency between the clustering results and the true labels may be caused by label leakage from the OOF target encoding step, which can create artificial correlations between the features and the target variable. We therefore designed a follow-up ablation experiment to test the impact of target encoding on clustering performance in the next section.
+
+\begin{table}[htbp]
 \centering
 \caption{Clustering algorithm performance comparison.}
 \label{tab:clustering_comparison}
@@ -189,53 +173,110 @@ K & Covariance & Silhouette & CH Index & DB Index & ARI & NMI \\ \midrule
 \begin{tabular}{@{}lcccccc@{}}
 \toprule
 Algorithm & K & Silhouette & CH Index & DB Index & ARI & NMI \\ \midrule
-K-Means & 4 & 0.1704 & 719.87 & 2.0741 & 0.3129 & 0.2299 \\
-Hierarchical (Ward) & 3 & 0.2436 & 725.18 & 1.7059 & 0.1750 & 0.1609 \\
-GMM & 4 & 0.1423 & 559.91 & 2.2580 & \textbf{0.3336} & \textbf{0.2734} \\ \bottomrule
+K-Means & 4 & 0.2313 & \textbf{729.24} & 2.0620 & 0.1734 & 0.1559 \\
+Hierarchical (Ward) & 4 & \textbf{0.2650} & 651.54 & 1.8610 & 0.1176 & 0.1113 \\
+GMM & 4 & 0.1697 & 678.75 & \textbf{2.1498} & \textbf{0.2270} & \textbf{0.1597} \\ \bottomrule
 \end{tabular}
 }
 \end{table}
 
-\begin{table}[H]
-\centering
-\caption{Dominant true class per cluster for each algorithm.}
-\label{tab:cluster_dominant}
-\resizebox{0.85\linewidth}{!}{
-\begin{tabular}{@{}lcccc@{}}
-\toprule
-Algorithm & Cluster 0 & Cluster 1 & Cluster 2 & Cluster 3 \\ \midrule
-K-Means (K=4) & Graduate (76.2\%) & Dropout (52.6\%) & Graduate (66.7\%) & Dropout (80.3\%) \\
-Hierarchical (K=3) & Graduate (57.3\%) & Dropout (54.5\%) & Graduate (54.6\%) & --- \\
-GMM (K=4, tied) & Graduate (76.2\%) & Dropout (59.6\%) & Graduate (66.7\%) & Dropout (80.3\%) \\ \bottomrule
-\end{tabular}
-}
-\end{table}
+% \begin{table}[H]
+% \centering
+% \caption{Dominant true class per cluster for each algorithm.}
+% \label{tab:cluster_dominant}
+% \resizebox{0.85\linewidth}{!}{
+% \begin{tabular}{@{}lcccc@{}}
+% \toprule
+% Algorithm & Cluster 0 & Cluster 1 & Cluster 2 & Cluster 3 \\ \midrule
+% K-Means (K=4) & Graduate (76.2\%) & Dropout (52.6\%) & Graduate (66.7\%) & Dropout (80.3\%) \\
+% Hierarchical (K=3) & Graduate (57.3\%) & Dropout (54.5\%) & Graduate (54.6\%) & --- \\
+% GMM (K=4, tied) & Graduate (76.2\%) & Dropout (59.6\%) & Graduate (66.7\%) & Dropout (80.3\%) \\ \bottomrule
+% \end{tabular}
+% }
+% \end{table}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 \centering
-\begin{minipage}[c]{0.32\textwidth}
+\begin{minipage}[c]{0.48\textwidth}
     \centering
-    \includegraphics[width=\linewidth]{../data/plots/03_kmeans_clusters_tsne.png}
-    \caption{K-Means (K=4)}
+    \includegraphics[width=0.95\linewidth]{../data/plots/03_tsne_perp_30.png}
+    \caption*{True labels}
+    \label{fig:tsne_true_labels}
+\end{minipage}
+\hfill
+\begin{minipage}[c]{0.48\textwidth}
+    \centering
+    \includegraphics[width=0.95\linewidth]{../data/plots/03_kmeans_clusters_tsne.png}
+    \caption*{K-Means (K=4)}
     \label{fig:kmeans_cluster_viz}
-\end{minipage}\hfill
-\begin{minipage}[c]{0.32\textwidth}
+\end{minipage}
+
+\vspace{0.5em}
+
+\begin{minipage}[c]{0.48\textwidth}
     \centering
-    \includegraphics[width=\linewidth]{../data/plots/03_hierarchical_clusters_tsne.png}
-    \caption{Hierarchical (Ward, K=3)}
+    \includegraphics[width=0.95\linewidth]{../data/plots/03_hierarchical_clusters_tsne.png}
+    \caption*{Hierarchical (K=4, ward)}
     \label{fig:hierarchical_cluster_viz}
-\end{minipage}\hfill
-\begin{minipage}[c]{0.32\textwidth}
+\end{minipage}
+\hfill
+\begin{minipage}[c]{0.48\textwidth}
     \centering
-    \includegraphics[width=\linewidth]{../data/plots/03_gmm_clusters_tsne.png}
-    \caption{GMM (K=4, tied)}
+    \includegraphics[width=0.95\linewidth]{../data/plots/03_gmm_clusters_tsne.png}
+    \caption*{GMM (K=4, tied)}
     \label{fig:gmm_cluster_viz}
 \end{minipage}
-\caption{Cluster visualization on 2D PCA projections. red - Dropout, orange - Enrolled, green - Graduate.}
+\caption{Cluster visualization on 2D t-SNE projections.}
 \label{fig:cluster_visualization}
 \end{figure}
 
-\textbf{Best clustering: GMM (K=4, tied covariance)} achieves the best ARI of 0.334 and NMI of 0.273, confirming that the shared covariance structure reduces overfitting in the high-dimensional target-encoded space. The modest ARI still reflects structural class overlap (Enrolled students lie between Dropout and Graduate), but GMM's soft assignments capture more label-aligned structure than centroid-based methods.
+% \textbf{Best clustering: GMM (K=4, tied covariance)} achieves the best ARI of 0.334 and NMI of 0.273, confirming that the shared covariance structure reduces overfitting in the high-dimensional target-encoded space. The modest ARI still reflects structural class overlap (Enrolled students lie between Dropout and Graduate), but GMM's soft assignments capture more label-aligned structure than centroid-based methods.
+
+\subsubsection{Clustering Ablation: Impact of Target Encoding}
+
+To test the impact of OOF target encoding on clustering performance, we conducted an ablation experiment where we removed all target-encoded features and re-ran the clustering algorithms on the remaining 23 features (standardized numerical features and binary features). 
+
+The clustering performance slightly decreased across all algorithms, comfirming that target encoding contributed to the clustering structure. However, the overall patterns remained consistent: all three algorithms still produced similar global structures with one cluster dominated by Graduate students and one cluster dominated by Dropout students, while Enrolled students does not form a distinct cluster among the remaining features but instead overlap with the other two classes. This suggests that while target encoding enhances the clustering signal especially for Enrolled students, the underlying structure of the data still reflects the same class relationships.
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[c]{0.48\textwidth}
+    \centering
+    \includegraphics[width=0.95\linewidth]{../data/plots/03a_tsne_perp_30.png}
+    \caption*{True labels}
+    \label{fig:tsne_true_labels}
+\end{minipage}
+\hfill
+\begin{minipage}[c]{0.48\textwidth}
+    \centering
+    \includegraphics[width=0.95\linewidth]{../data/plots/03a_kmeans_clusters_tsne.png}
+    \caption*{K-Means (K=4)}
+    \label{fig:kmeans_cluster_viz}
+\end{minipage}
+
+\vspace{0.5em}
+
+\begin{minipage}[c]{0.48\textwidth}
+    \centering
+    \includegraphics[width=0.95\linewidth]{../data/plots/03a_hierarchical_clusters_tsne.png}
+    \caption*{Hierarchical (K=4, ward)}
+    \label{fig:hierarchical_cluster_viz}
+\end{minipage}
+\hfill
+\begin{minipage}[c]{0.48\textwidth}
+    \centering
+    \includegraphics[width=0.95\linewidth]{../data/plots/03a_gmm_clusters_tsne.png}
+    \caption*{GMM (K=4, tied)}
+    \label{fig:gmm_cluster_viz}
+\end{minipage}
+\caption{Cluster visualization on 2D t-SNE projections without target-encoded features.}
+\label{fig:cluster_visualization}
+\end{figure}
+
+
+\subsubsection{Density-Based Clustering Exploration}
+
+DBSCAN and OPTICS were explored but failed: DBSCAN classified 100\% of points as noise across all \texttt{eps} values (0.3-1.5), and OPTICS with xi-based extraction consistently returned only one cluster. Both failures stem from the curse of dimensionality --- in 40 dimensions all pairwise distances become similar (coefficient of variation = 0.32), making density-based methods unable to identify dense regions.
 
 \subsection{Prediction: Training and Testing}
 

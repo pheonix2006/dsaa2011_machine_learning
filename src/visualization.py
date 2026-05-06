@@ -83,7 +83,7 @@ def plot_tsne_2d_multi(embedding: np.ndarray, labels: np.ndarray, perplexity: in
         ax.scatter(
             embedding[mask, 0], embedding[mask, 1],
             c=[color],
-            label=str(label),
+            label="Cluster "+str(label),
             alpha=0.6, s=8,
         )
 
