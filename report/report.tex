@@ -119,7 +119,7 @@ We applied three clustering algorithms to the engineered feature dataset: K-Mean
 \paragraph{K-Means K-Value Exploration.} We tested $K=3,4,\ldots,19$. $K=4$ achieved the best ARI of 0.2313; $K=5$ achieved the best DB index of 2.2165; but other metrics favored $K=3$ and monotonically worsened with larger $K$. The detailed metrics for $K=3,4,5,6$ are shown in Table~\ref{tab:kmeans_k_comparison}.
 
 
-\paragraph{Hierarchical Clustering.} We first compared four linkage methods with $K=3$ to identify the best-performing method, then explored $K$ values for that method. The ARI results show that ward linkage significantly outperforms complete, average, and single linkages which produce degenerate partitions with ARI close to zero. 
+\paragraph{Hierarchical Clustering.} We first compared four linkage methods with $K=3$ to identify the best-performing method, then explored $K$ values for that method. The ARI results show that ward linkage significantly outperforms complete, average, and single linkages which produce degenerate partitions with ARI close to zero. For consistency with the other algorithms, we selected $K=4$ with tied covariance as the best configuration. 
 
 K-value exploration with Ward linkage showed similar patterns to K-Means: ARI peaked at K=3 (0.1332), Silhouette and DB index favored K=4, and the overall pattern of worsening metrics with larger K values. Detailed metrics for Ward linkage with $K=3,4,5,6$ are shown in Table~\ref{tab:hierarchical_k_comparison}.
 
@@ -130,13 +130,13 @@ K-value exploration with Ward linkage showed similar patterns to K-Means: ARI pe
 \captionof{table}{K-Means K-value exploration on engineered features.}
 \label{tab:kmeans_k_comparison}
 \resizebox{\linewidth}{!}{
-\begin{tabular}{@{}lcccccc@{}}
+\begin{tabular}{@{}lccccc@{}}
 \toprule
-K & Silhouette & CH Index & DB Index & ARI & NMI \\ \midrule
-3 & 0.1301 & \textbf{848.80} & 1.5689 & \textbf{0.2722} & 0.1198 \\
-4 & \textbf{0.2313} & 729.24 & \textbf{2.0620} & 0.1734 & \textbf{0.1559} \\
-5 & 0.2004 & 629.19 & 2.2165 & 0.1422 & 0.1486 \\
-6 & 0.1544 & 576.00 & 1.9510 & 0.1246 & 0.1306 \\ \bottomrule
+K & ARI & NMI & Silhouette & CH Index & DB Index \\ \midrule
+3 & 0.1708 & 0.1757 & \textbf{0.2741} & \textbf{839.73} & \textbf{1.5640} \\
+4 & \textbf{0.3129} & \textbf{0.2299} & 0.1704 & 719.87 & 2.0741 \\
+5 & 0.3052 & 0.2213 & 0.1690 & 625.90 & 1.9093 \\
+6 & 0.2061 & 0.1861 & 0.1243 & 566.57 & 1.9614 \\ \bottomrule
 \end{tabular}
 }
 \end{minipage}\hfill
@@ -145,21 +145,21 @@ K & Silhouette & CH Index & DB Index & ARI & NMI \\ \midrule
 \captionof{table}{Hierarchical Clustering K-value exploration (Ward linkage).}
 \label{tab:hierarchical_k_comparison}
 \resizebox{\linewidth}{!}{
-\begin{tabular}{@{}lcccccc@{}}
+\begin{tabular}{@{}lccccc@{}}
 \toprule
-K & Silhouette & CH Index & DB Index & ARI & NMI \\ \midrule
-3 & 0.2538 & \textbf{772.45} & 1.6391 & \textbf{0.1332} & \textbf{0.1187} \\
-4 & \textbf{0.2650} & 651.54 & 1.8610 & 0.1176 & 0.1113 \\
-5 & 0.2539 & 563.06 & 1.5257 & 0.1149 & 0.1098 \\
-6 & 0.1226 & 513.87 & \textbf{1.9085} & 0.0898 & 0.0932 \\ \bottomrule
+K & ARI & NMI & Silhouette & CH Index & DB Index \\ \midrule
+3 & 0.1750 & \textbf{0.1609} & 0.2436 & \textbf{725.18} & 1.7059 \\
+4 & 0.1522 & 0.1501 & \textbf{0.2575} & 632.87 & 1.8877 \\
+5 & 0.1485 & 0.1550 & 0.2480 & 550.63 & \textbf{1.5621} \\
+6 & \textbf{0.1898} & 0.1534 & 0.1516 & 500.74 & 2.1736 \\ \bottomrule
 \end{tabular}
 }
 \end{minipage}
 \end{figure}
 
-\paragraph{GMM K-Value and Covariance Exploration.} We tested $K=3,4,5,6$ combined with four covariance types (full, tied, diag, spherical). Although $K=3$ with diag covariance achieved the best ARI $0.2502$, $K=4$ with tied covariance achieved a better Silhouette and close metric values. For consistency with the other algorithms, we selected $K=4$ with tied covariance as the best GMM configuration. 
+\paragraph{GMM K-Value and Covariance Exploration.} We tested $K=3,4,5,6$ combined with four covariance types (full, tied, diag, spherical). $K=4$ with tied covariance achieved the highest ARI of 0.3336 and NMI of 0.2734.
 
-\textbf{Overall Algorithm Comparison:} Table~\ref{tab:clustering_comparison} summarizes all three algorithms with their optimal configurations. GMM (K=4, tied) leads in ARI (0.2270), NMI (0.1597) and DB Index (2.1498). However, the gap of the metrics among the three algorithms is minor, and overall performance is modest across all algorithms. This may suggest that the global clustering structure of the dataset is relatively strong and stable, leading to similar partitions across different algorithms, but the structural overlap between classes (especially Enrolled) limits the maximum achievable ARI and NMI.
+\textbf{Overall Algorithm Comparison:} Table~\ref{tab:clustering_comparison} summarizes all three algorithms with their optimal configurations. GMM (K=4, tied) leads in ARI (0.3336) and NMI (0.2734). However, the gap of the metrics among the three algorithms is minor, and overall performance is modest across all algorithms. This may suggest that the global clustering structure of the dataset is relatively strong and stable, leading to similar partitions across different algorithms, but the structural overlap between classes (especially Enrolled) limits the maximum achievable ARI and NMI.
 
 Figure~\ref{fig:cluster_visualization} shows the cluster assignments of the three algorithms and true labels on the 2D t-SNE projection. K-Means produces compact clusters but with significant label mixing, while the results of Hierarchical clustering and GMM show more mixing and overlap patterns between the clusters. Nevertheless, all three algorithms capture similar global structures that is highly consistent with the true labels, with one cluster dominated by Graduate students, one cluster dominated by Dropout students, and one cluster that is a mixture of Enrolled and other classes. 
 
@@ -169,13 +169,13 @@ However, this observed consistency between the clustering results and the true l
 \centering
 \caption{Clustering algorithm performance comparison.}
 \label{tab:clustering_comparison}
-\resizebox{0.9\linewidth}{!}{
+\resizebox{0.7\linewidth}{!}{
 \begin{tabular}{@{}lcccccc@{}}
 \toprule
-Algorithm & K & Silhouette & CH Index & DB Index & ARI & NMI \\ \midrule
-K-Means & 4 & 0.2313 & \textbf{729.24} & 2.0620 & 0.1734 & 0.1559 \\
-Hierarchical (Ward) & 4 & \textbf{0.2650} & 651.54 & 1.8610 & 0.1176 & 0.1113 \\
-GMM & 4 & 0.1697 & 678.75 & \textbf{2.1498} & \textbf{0.2270} & \textbf{0.1597} \\ \bottomrule
+Algorithm & K & ARI & NMI & Silhouette & CH Index & DB Index \\ \midrule
+K-Means & 4 & 0.3129 & 0.2299 & 0.1704 & \textbf{719.87} & 2.0741 \\
+Hierarchical (Ward) & 4 & 0.1522 & 0.1501 & \textbf{0.2575} & 632.87 & \textbf{1.8877} \\
+GMM & 4 & \textbf{0.3336} & \textbf{0.2734} & 0.1423 & 559.91 & 2.2580 \\ \bottomrule
 \end{tabular}
 }
 \end{table}
@@ -236,7 +236,7 @@ GMM & 4 & 0.1697 & 678.75 & \textbf{2.1498} & \textbf{0.2270} & \textbf{0.1597} 
 
 To test the impact of OOF target encoding on clustering performance, we conducted an ablation experiment where we removed all target-encoded features and re-ran the clustering algorithms on the remaining 23 features (standardized numerical features and binary features). 
 
-The clustering performance slightly decreased across all algorithms, comfirming that target encoding contributed to the clustering structure. However, the overall patterns remained consistent: all three algorithms still produced similar global structures with one cluster dominated by Graduate students and one cluster dominated by Dropout students, while Enrolled students does not form a distinct cluster among the remaining features but instead overlap with the other two classes. This suggests that while target encoding enhances the clustering signal especially for Enrolled students, the underlying structure of the data still reflects the same class relationships.
+The clustering performance significantly decreased across all algorithms, comfirming that target encoding contributed to the clustering structure. However, the overall patterns remained consistent: all three algorithms still produced similar global structures with one cluster dominated by Graduate students and one cluster dominated by Dropout students, while Enrolled students does not form a distinct cluster among the remaining features but instead overlap with the other two classes. This suggests that while target encoding enhances the clustering signal especially for Enrolled students, the underlying structure of the data still reflects the same class relationships.
 
 \begin{figure}[htbp]
 \centering
