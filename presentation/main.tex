@@ -159,9 +159,23 @@ This study is based on the ``Student Dropout and Academic Success'' dataset from
 \frametitle{Part C}
 \end{frame}
 
-\section{Part D}
 \begin{frame}
-\frametitle{Part D}
+\frametitle{Conclusion}
+
+\textbf{Key Findings}
+\begin{enumerate}
+    \item Engineered top-40 features carry strong signal; academic metrics dominate.
+    \item \textcolor{orange}{Enrolled} is structurally intermediate — not a natural cluster.
+    \item LR is the strongest baseline; LR + class-bias tuning achieves best F1 = \textbf{0.723}.
+\end{enumerate}
+
+\vspace{0.3cm}
+\textbf{Limitations \& Future Work}
+\begin{itemize}
+    \item LR+bias gain is borderline significant ($p = 0.051$)
+    \item Future: better Enrolled modeling, external validation, early-warning deployment
+\end{itemize}
+
 \end{frame}
 
 \section{Reference}
