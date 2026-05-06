@@ -156,7 +156,79 @@ This study is based on the ``Student Dropout and Academic Success'' dataset from
 
 \section{Part C}
 \begin{frame}
-\frametitle{Part C}
+\frametitle{Open-ended Exploration: LR Class-Bias Tuning}
+
+\begin{columns}[T]
+
+    \begin{column}{0.50\textwidth}
+        {\normalsize \textbf{\textcolor{mainblue}{1. Motivation}}}
+        \begin{itemize}
+            \scriptsize
+            \setlength{\itemsep}{1pt}
+            \item \texttt{class\_weight='balanced'} overcompensates for Enrolled ($1.86\times$ weight), causing over-prediction in borderline cases.
+        \end{itemize}
+
+        \vspace{0.1cm}
+        {\normalsize \textbf{\textcolor{mainblue}{2. Method: Boundary Refinement}}}
+        \begin{itemize}
+            \scriptsize
+            \setlength{\itemsep}{1pt}
+            \item Post-hoc bias: $\hat{y} = \arg\max_k [\log P(y{=}k \mid x) + b_k]$
+            \item Fix $b_{\text{Dropout}}{=}0$, search only 2 offsets (2-DOF).
+            \item $41 \times 41$ grid on \textit{validation set}.
+            \item Selected: $b = [0,\; 0,\; +0.4]$ — Graduate gets $+0.4$ log-odds.
+        \end{itemize}
+
+        \vspace{0.1cm}
+        {\normalsize \textbf{\textcolor{mainblue}{3. Significance}}}
+        \begin{itemize}
+            \scriptsize
+            \setlength{\itemsep}{1pt}
+            \item Bootstrap ($n{=}10$k): $p = 0.051$ — borderline at 95\% level.
+        \end{itemize}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+        {\normalsize \textbf{\textcolor{mainblue}{4. Model Ranking (Test F1 macro)}}}
+
+        \begin{center}
+            \resizebox{\textwidth}{!}{
+            \renewcommand{\arraystretch}{1.0}
+            \scriptsize
+            \begin{tabular}{lcc}
+            \hline
+            \textbf{Model} & \textbf{Acc} & \textbf{F1} \\ \hline
+            Decision Tree       & 0.712 & 0.676 \\
+            SVM (RBF)           & 0.732 & 0.696 \\
+            Logistic Regression & 0.741 & 0.708 \\
+            Random Forest       & 0.747 & 0.706 \\
+            ExtraTrees          & 0.767 & 0.714 \\
+            \textbf{LR + Class-Bias} & \textbf{0.765} & \textbf{0.723} \\ \hline
+            \end{tabular}
+            }
+        \end{center}
+
+        \vspace{0.05cm}
+        {\normalsize \textbf{\textcolor{mainblue}{5. Per-Class Gain vs LR}}}
+
+        \begin{center}
+            \resizebox{0.75\textwidth}{!}{
+            \renewcommand{\arraystretch}{1.0}
+            \scriptsize
+            \begin{tabular}{lccc}
+            \hline
+            & \textbf{Drop.} & \textbf{Enr.} & \textbf{Grad.} \\ \hline
+            $\Delta$ F1 & +0.004 & +0.010 & \textbf{+0.025} \\ \hline
+            \end{tabular}
+            }
+        \end{center}
+
+        \vspace{0.05cm}
+        {\scriptsize \textit{\textcolor{darkgray}{LR + class-bias tuning: \#1 among all 9 models.}}}
+    \end{column}
+
+\end{columns}
+
 \end{frame}
 
 \begin{frame}
