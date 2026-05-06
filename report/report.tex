@@ -465,7 +465,7 @@ The corrected top-40 feature space changes the open-ended question: the baseline
     \end{minipage}
 \end{figure}
 
-Ensemble gains are useful but modest: ExtraTrees reaches macro F1 = 0.7143, above RF and GB, while the validation-tuned LR rule gives the largest held-out improvement (0.7228). This supports the interpretation that the remaining error is mainly a class-boundary problem around Enrolled. The selected validation biases [-0.8, -0.8, -0.4] adjust LR's relative class thresholds and improve macro balance.
+Ensemble gains are useful but modest: ExtraTrees reaches macro F1 = 0.7143, above RF and GB, while the validation-tuned LR rule gives the largest held-out improvement (0.7228). This supports the interpretation that the remaining error is mainly a class-boundary problem around Enrolled. Since argmax depends only on relative differences, we fix Dropout bias at 0 and search the Enrolled and Graduate offsets. The selected biases [0, 0, +0.4] give Graduate a +0.4 log-odds advantage, correcting the balanced model's tendency to over-predict Enrolled in borderline cases.
 
 \subsection{Class Imbalance Handling}
 
