@@ -37,13 +37,13 @@
 \maketitle
 
 \begin{abstract}
-We analyze the UCI Student Dropout and Academic Success dataset through preprocessing, t-SNE visualization, clustering, supervised classification, model evaluation, and open-ended exploration. The engineered top-40 feature space is dominated by academic performance signals such as semester approval rates and grades. Unsupervised analysis shows that Enrolled students lie between Dropout and Graduate rather than forming a clean natural cluster. Logistic Regression is the strongest mandatory baseline. In open-ended exploration, validation-tuned class-bias adjustment for LR achieves the best held-out test macro F1 of 0.7228, improving the Enrolled decision boundary while remaining only borderline significant over plain LR.
+We analyze the UCI Student Dropout and Academic Success dataset \cite{predict_students'_dropout_and_academic_success_697} through preprocessing, t-SNE visualization, clustering, supervised classification, model evaluation, and open-ended exploration. The engineered top-40 feature space is dominated by academic performance signals such as semester approval rates and grades. Unsupervised analysis shows that Enrolled students lie between Dropout and Graduate rather than forming a clean natural cluster. Logistic Regression is the strongest mandatory baseline. In open-ended exploration, validation-tuned class-bias adjustment for LR achieves the best held-out test macro F1 of 0.7228, improving the Enrolled decision boundary while remaining only borderline significant over plain LR.
 \end{abstract}
 
 % ====================
 \section{Introduction}
 
-The Student Dropout and Academic Success dataset from the UCI Machine Learning Repository [1] contains 4,424 instances of students enrolled in various undergraduate programs at a Portuguese higher education institution. Each instance is described by 36 features covering demographics, socioeconomic background, and academic performance across the first and second semesters.
+The Student Dropout and Academic Success dataset from the UCI Machine Learning Repository \cite{predict_students'_dropout_and_academic_success_697} contains 4,424 instances of students enrolled in various undergraduate programs at a Portuguese higher education institution. Each instance is described by 36 features covering demographics, socioeconomic background, and academic performance across the first and second semesters.
 
 The report follows an evidence-first structure: construct an engineered top-40 feature space, use t-SNE and clustering to test whether outcomes form natural groups, then evaluate supervised decision boundaries. Because Enrolled students remain structurally intermediate between Dropout and Graduate, the open-ended section focuses on class-boundary refinement rather than only adding model complexity.
 
@@ -80,11 +80,11 @@ The dataset contains 36 raw features that are categorized into four types: \text
 
 \paragraph{Data splitting and target encoding.} The dataset was split into stratified train/validation/test sets (70/15/15). OOF target encoding was fit on training folds for nominal features and then applied to validation and test sets, preventing leakage while capturing categorical signal.
 
-\paragraph{Feature standardization, selection, and output.} A Random Forest selected the top 40 target-encoded features by importance. Non-binary selected features were standardized using training-set statistics only; binary indicators remained 0/1, and the fitted scaler was reused for validation and test sets.
+\paragraph{Feature standardization, selection, and output.} A Random Forest \cite{Breiman2001RandomF} selected the top 40 target-encoded features by importance. Non-binary selected features were standardized using training-set statistics only by Scikit-learn's \texttt{StandardScaler} \cite{Pedregosa2011ScikitlearnML}; binary indicators remained 0/1, and the fitted scaler was reused for validation and test sets.
 
 \subsection{Data Visualization (t-SNE)}
 
-We applied t-SNE to the engineered feature dataset to project the high-dimensional feature space into lower dimensions for visualization.
+We applied t-SNE \cite{Maaten2008VisualizingDU} to the engineered feature dataset to project the high-dimensional feature space into lower dimensions for visualization.
 
 A systematic pattern analysis across four perplexity values 10, 20, 30, and 50 highlights the algorithm's sensitivity to local versus global structure, as shown in Figure~\ref{fig:tsne_perplexity}.
 
@@ -114,10 +114,9 @@ Furthermore, extending the projection from 2D to 3D (Figure~\ref{fig:tsne_3d}) p
 
 \subsubsection{Algorithm Exploration and Comparison}
 
-We applied three clustering algorithms to the engineered feature dataset: K-Means, Agglomerative Hierarchical Clustering, and Gaussian Mixture Models (GMM). 2D t-SNE projections with perplexity 30 were used for visualization, which can be compared with the original t-SNE visualization (Figure~\ref{fig:tsne_perplexity}) to assess how well the clusters align with the underlying structure (true label) of the data.
+We applied three clustering algorithms to the engineered feature dataset: K-Means \cite{ahmed2020k}, Agglomerative Hierarchical Clustering \cite{murtagh2012algorithms}, and Gaussian Mixture Models (GMM). 2D t-SNE projections with perplexity 30 were used for visualization, which can be compared with the original t-SNE visualization (Figure~\ref{fig:tsne_perplexity}) to assess how well the clusters align with the underlying structure (true label) of the data.
 
 \paragraph{K-Means K-Value Exploration.} We tested $K=3,4,\ldots,19$. $K=4$ achieved the best ARI of 0.2313; $K=5$ achieved the best DB index of 2.2165; but other metrics favored $K=3$ and monotonically worsened with larger $K$. The detailed metrics for $K=3,4,5,6$ are shown in Table~\ref{tab:kmeans_k_comparison}.
-
 
 \paragraph{Hierarchical Clustering.} We first compared four linkage methods with $K=3$ to identify the best-performing method, then explored $K$ values for that method. The ARI results show that ward linkage significantly outperforms complete, average, and single linkages which produce degenerate partitions with ARI close to zero. For consistency with the other algorithms, we selected $K=4$ with tied covariance as the best configuration. 
 
@@ -618,19 +617,9 @@ Table~\ref{tab:all_models} presents all test-set model configurations. Using hel
 \textbf{Future work:} Future work should focus on better modeling of Enrolled students, external validation, and temporal academic trajectories for early-warning deployment.
 
 % ====================
-\section*{References}
 
-{
-\footnotesize
-
-[1] Realinho, V., et al.\ (2022). Student Dropout and Academic Success. UCI Machine Learning Repository. \url{https://doi.org/10.24432/C5MC89}
-
-[2] Pedregosa, F., et al.\ (2011). Scikit-learn: Machine Learning in Python. JMLR, 12, pp.\ 2825--2830.
-
-[3] Van der Maaten, L.\ and Hinton, G.\ (2008). Visualizing Data using t-SNE. JMLR, 9, pp.\ 2579--2605.
-
-[4] Claude by Anthropic (Claude Opus 4) was used for code debugging, visualization code generation, and report language polishing, accounting for less than 30\% of total project effort. All core ML implementations are original student work.
-}
+\bibliographystyle{plain}
+\bibliography{report}
 
 % ====================
 \section*{Credit}
