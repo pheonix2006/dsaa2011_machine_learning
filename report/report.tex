@@ -247,14 +247,14 @@ The clustering performance significantly decreased across all algorithms, comfir
     \centering
     \includegraphics[width=0.95\linewidth]{../data/plots/03a_tsne_perp_30.png}
     \caption*{True labels}
-    \label{fig:tsne_true_labels}
+    \label{fig:tsne_true_labels_no_tgt}
 \end{minipage}
 \hfill
 \begin{minipage}[c]{0.48\textwidth}
     \centering
     \includegraphics[width=0.95\linewidth]{../data/plots/03a_kmeans_clusters_tsne.png}
     \caption*{K-Means (K=4)}
-    \label{fig:kmeans_cluster_viz}
+    \label{fig:kmeans_cluster_viz_no_tgt}
 \end{minipage}
 
 \vspace{0.5em}
@@ -263,14 +263,14 @@ The clustering performance significantly decreased across all algorithms, comfir
     \centering
     \includegraphics[width=0.95\linewidth]{../data/plots/03a_hierarchical_clusters_tsne.png}
     \caption*{Hierarchical (K=4, ward)}
-    \label{fig:hierarchical_cluster_viz}
+    \label{fig:hierarchical_cluster_viz_no_tgt}
 \end{minipage}
 \hfill
 \begin{minipage}[c]{0.48\textwidth}
     \centering
     \includegraphics[width=0.95\linewidth]{../data/plots/03a_gmm_clusters_tsne.png}
     \caption*{GMM (K=4, tied)}
-    \label{fig:gmm_cluster_viz}
+    \label{fig:gmm_cluster_viz_no_tgt}
 \end{minipage}
 \caption{Cluster visualization on 2D t-SNE projections without target-encoded features.}
 \label{fig:cluster_visualization_no_target}
@@ -314,11 +314,32 @@ Since the three outcomes are not naturally separated (Section~2.3), we train sup
 
 The confusion matrix (Figure~\ref{fig:cm_test}) shows Graduate recall is highest (78.6\%) while Enrolled is lowest (68.1\%, with 12.6\% misclassified as Dropout and 19.3\% as Graduate). This confirms that Enrolled lies in the overlapping zone between the two more separable outcomes, consistent with t-SNE (Section~2.2) and clustering (Section~2.3) findings.
 
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.31\linewidth]{../data/plots/04_decision_boundary_decision_tree.png}\hfill
+    \includegraphics[width=0.31\linewidth]{../data/plots/04_decision_boundary_logistic_regression.png}\hfill
+    \includegraphics[width=0.31\linewidth]{../data/plots/04_decision_boundary_svm_rbf.png}
+    \caption{Decision boundaries of DT (left), LR (center), and SVM-RBF (right) on the 2D t-SNE projection. DT creates fragmented regions (overfitting), LR a clean linear boundary, SVM-RBF moderate non-linearity.}
+    \label{fig:decision_boundary}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}[c]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../data/plots/04_confusion_matrices_train.png}
+    \end{minipage}\hfill
+    \begin{minipage}[c]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../data/plots/04_confusion_matrices_entire.png}
+    \end{minipage}
+    \caption{Confusion matrices on the training set (left) and entire dataset (right). DT achieves near-perfect training accuracy (overfitting), while LR and SVM remain consistent across all evaluation sets.}
+    \label{fig:cm_train_entire}
+\end{figure}
+
 \subsection{Evaluation and Model Choice}
 
-We evaluate the mandatory baselines using held-out metrics, ROC-AUC, cross-validation, validation/learning curves, and GridSearchCV tuning.
-
-\textbf{Detailed metrics.} Table~\ref{tab:nb05_metrics} reports the full set of evaluation metrics on the test set. LR leads among the mandatory baselines by macro F1, while SVM becomes competitive after corrected scaling but still trails LR.
+We evaluate the mandatory baselines using held-out metrics, ROC-AUC, cross-validation, validation/learning curves, and GridSearchCV tuning. Tables~\ref{tab:nb05_metrics} and~\ref{tab:auc_comparison} report per-model test-set metrics and per-class AUC scores respectively. LR leads by macro F1 among the mandatory baselines, while SVM becomes competitive after corrected scaling but still trails LR.
 
 \begin{table}[htbp]
     \centering
@@ -357,11 +378,9 @@ We evaluate the mandatory baselines using held-out metrics, ROC-AUC, cross-valid
     \end{minipage}
 \end{table}
 
-\textbf{ROC curves and AUC.} Figure~\ref{fig:roc} compares macro-average ROC curves. LR achieves the highest macro AUC (0.888), closely followed by SVM (0.887) and DT (0.783). Per-class One-vs-Rest ROC analysis confirms that Enrolled is the hardest class to predict across all models (AUC $\approx$ 0.82 vs.\ $\approx$ 0.93 for Graduate), consistent with its transitional position between Dropout and Graduate outcomes.
+Figure~\ref{fig:roc} compares macro-average ROC curves across the three baselines. LR achieves the highest macro AUC (0.888), closely followed by SVM (0.887) and DT (0.783). Per-class One-vs-Rest analysis confirms that Enrolled is the hardest class across all models (AUC $\approx$ 0.82 vs.\ $\approx$ 0.93 for Graduate), consistent with its transitional position.
 
-\textbf{Cross-validation.} 5-fold CV on the combined train+val set (3{,}760 samples) confirms LR as the most stable mandatory baseline: LR CV F1 = 0.7029 $\pm$ 0.0064, DT = 0.6511 $\pm$ 0.0144, SVM = 0.6955 $\pm$ 0.0063.
-
-\textbf{Validation curve analysis.} Figure~\ref{fig:valcurves_all} shows that DT max\_depth exhibits classic overfitting, while SVM C steadily improves performance. LR is insensitive to C, confirming the linear assumption is the primary bottleneck.
+Five-fold cross-validation on the combined train+val set (3{,}760 samples) confirms LR as the most stable baseline: LR CV F1 = 0.7029 $\pm$ 0.0064, DT = 0.6511 $\pm$ 0.0144, SVM = 0.6955 $\pm$ 0.0063. Validation curves (Figure~\ref{fig:valcurves_all}) show that DT max\_depth exhibits classic overfitting, while SVM C steadily improves performance. LR is insensitive to C, confirming that the linear assumption is the primary bottleneck. Learning curves further confirm that DT persistently overfits, LR has nearly converged, and SVM could benefit from more data.
 
 \begin{figure}[htbp]
     \centering
@@ -380,39 +399,24 @@ We evaluate the mandatory baselines using held-out metrics, ROC-AUC, cross-valid
     \end{minipage}
 \end{figure}
 
-\textbf{Learning curves} confirm that DT persistently overfits, LR has nearly converged, and SVM could benefit from more data.
+GridSearchCV tuning produced the following best configurations: DT (\texttt{max\_depth=5, min\_samples\_split=2, min\_samples\_leaf=1}, CV F1=0.6839), LR (\texttt{C=10, penalty='l2', solver='saga'}, CV F1=0.7051), and SVM (\texttt{C=10, gamma=0.01}, CV F1=0.7039). Table~\ref{tab:tuning} compares baseline and tuned performance. SVM benefits most from tuning (macro F1: 0.6955 $\to$ 0.7033), while LR and DT show negligible change.
 
-\begin{figure}[htbp]
+\begin{table}[htbp]
     \centering
-    \begin{minipage}[c]{0.65\textwidth}
-        \textbf{Hyperparameter tuning via GridSearchCV} produced the best configurations:
-        \vspace{0.5em} 
-        
-        \resizebox{\linewidth}{!}{
-            \begin{tabular}{@{}lll@{}}
-            \textbf{DT:} & \texttt{max\_depth=5, min\_samples\_split=2, min\_samples\_leaf=1} & (CV F1=0.6839) \\
-            \textbf{LR:} & \texttt{C=10, penalty='l2', solver='saga'} & (CV F1=0.7051) \\
-            \textbf{SVM:} & \texttt{C=10, gamma=0.01} & (CV F1=0.7039) \\
-            \end{tabular}
-        }
-    \end{minipage}\hfill
-    \begin{minipage}[c]{0.3\textwidth}
-        \centering
-        \captionof{table}{Baseline vs.\ tuned (F1 macro).}
-        \label{tab:tuning}
-        \resizebox{\linewidth}{!}{
-            \begin{tabular}{@{}lccc@{}}
-            \toprule
-            Model & Baseline & Tuned & $\Delta$ \\
-            \midrule
-            DT & 0.6752 & 0.6731 & $-$0.0021 \\
-            LR & 0.7076 & 0.7074 & $-$0.0002 \\
-            SVM & 0.6955 & 0.7033 & $+$0.0078 \\
-            \bottomrule
-            \end{tabular}
-        }
-    \end{minipage}
-\end{figure}
+    \caption{Baseline vs.\ tuned macro F1 on the test set.}
+    \label{tab:tuning}
+    \resizebox{0.6\linewidth}{!}{
+        \begin{tabular}{@{}lccc@{}}
+        \toprule
+        Model & Baseline & Tuned & $\Delta$ \\
+        \midrule
+        DT & 0.6752 & 0.6731 & $-$0.0021 \\
+        LR & 0.7076 & 0.7074 & $-$0.0002 \\
+        SVM & 0.6955 & 0.7033 & $+$0.0078 \\
+        \bottomrule
+        \end{tabular}
+    }
+\end{table}
 
 \textbf{Further discussion.}
 Among the mandatory baselines, LR is the strongest and most stable model, achieving the highest macro AUC (0.888) and test macro F1 (0.708). DT exhibits the most overfitting, with validation curves showing diverging train/test scores and the largest train-test F1 gap (Table~\ref{tab:nb04_metrics}). SVM benefits from GridSearchCV tuning (macro F1: 0.6955 $\to$ 0.7033) but remains below LR, suggesting the RBF kernel adds limited value in this feature space. LR's limitation stems from its linear decision boundary rather than insufficient regularization, as tuning yields negligible improvement. Across all configurations, Enrolled remains the hardest class because it is both underrepresented and structurally intermediate between Dropout and Graduate. These findings motivate open-ended exploration of ensemble methods and class-boundary refinement.
@@ -613,9 +617,10 @@ Among mandatory baselines, LR is strongest and most stable; DT overfits and SVM 
 \textbf{Future work:} Future work should focus on better modeling of Enrolled students, external validation, and temporal academic trajectories for early-warning deployment.
 
 % ====================
-
-\bibliographystyle{plain}
+\bibliographystyle{plainnat}
 \bibliography{report}
+
+\noindent\textit{GenAI disclosure:} Claude by Anthropic (Claude Opus 4) was used for code debugging, visualization code generation, and report language polishing, accounting for less than 30\% of total project effort. All core ML implementations are original student work.
 
 % ====================
 \section*{Credit}

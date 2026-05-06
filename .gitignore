@@ -50,3 +50,7 @@ Thumbs.db
 .env
 .python-version
 uv.lock
+
+# Submission artifacts
+submission_9_student_dropout/
+9_student_dropout.zip
