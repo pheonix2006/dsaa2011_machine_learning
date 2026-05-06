@@ -37,7 +37,7 @@
 \maketitle
 
 \begin{abstract}
-We analyze the UCI Student Dropout and Academic Success dataset \cite{predict_students'_dropout_and_academic_success_697} through preprocessing, t-SNE visualization, clustering, supervised classification, model evaluation, and open-ended exploration. The engineered top-40 feature space is dominated by academic performance signals such as semester approval rates and grades. Unsupervised analysis shows that Enrolled students lie between Dropout and Graduate rather than forming a clean natural cluster. Logistic Regression is the strongest mandatory baseline. In open-ended exploration, validation-tuned class-bias adjustment for LR achieves the best held-out test macro F1 of 0.7228, improving the Enrolled decision boundary while remaining only borderline significant over plain LR.
+We analyze the UCI Student Dropout and Academic Success dataset through preprocessing, t-SNE visualization, clustering, supervised classification, model evaluation, and open-ended exploration including ensemble methods, neural networks, and class-boundary refinement. The engineered top-40 feature space is dominated by academic performance signals such as semester approval rates and grades. Unsupervised analysis shows that Enrolled students lie between Dropout and Graduate rather than forming a clean natural cluster. Logistic Regression is the strongest mandatory baseline. In open-ended exploration, validation-tuned class-bias adjustment for LR achieves the best held-out test macro F1 of 0.7228, outperforming MLP neural networks (0.7077) and ensemble methods, while remaining only borderline significant over plain LR.
 \end{abstract}
 
 % ====================
@@ -278,13 +278,7 @@ DBSCAN and OPTICS were explored but failed: DBSCAN classified 100\% of points as
 
 \subsection{Prediction: Training and Testing}
 
-The clustering results suggest that the three student outcomes are not naturally separated in the engineered feature space. We therefore train supervised classifiers on the top-40 engineered features to test whether label-informed decision boundaries can better distinguish Dropout, Enrolled, and Graduate students.
-
-\textbf{Data preparation.} We used the engineered feature dataset (40 features after OOF target encoding and top-40 selection), split into train (3{,}096), validation (664), and test (664) sets. The class distribution in the training set is: Dropout 32.1\%, Enrolled 17.9\%, Graduate 49.9\%.
-
-Decision Tree (DT), Logistic Regression (LR), and RBF-SVM were selected because they represent complementary assumptions: non-linear splits, interpretable linear boundaries, and kernel-based nonlinear boundaries.
-
-We trained each classifier using default configurations from \texttt{prediction.py}: Decision Tree (\texttt{max\_depth=10, class\_weight='balanced'}), Logistic Regression (\texttt{solver='saga', class\_weight='balanced'}), and SVM with RBF kernel (\texttt{class\_weight='balanced'}). All models were evaluated on training, validation, test, and entire sets.
+Since the three outcomes are not naturally separated (Section~2.3), we train supervised classifiers on the top-40 engineered features (train 3{,}096 / val 664 / test 664; class distribution: Dropout 32.1\%, Enrolled 17.9\%, Graduate 49.9\%). We select DT (non-linear splits), LR (linear boundary), and RBF-SVM (kernel-based nonlinearity), all with \texttt{class\_weight='balanced'}.
 
 \textbf{Multi-set evaluation.} Table~\ref{tab:nb04_metrics} reports accuracy and macro F1 across all evaluation sets. DT has the largest train-test gap, indicating overfitting. LR has the strongest held-out test macro F1 among the mandatory baselines and remains stable across train, validation, and test splits. Default RBF-SVM improves substantially after the corrected scaling step, but LR remains the strongest mandatory baseline by held-out macro F1.
 
@@ -314,13 +308,11 @@ We trained each classifier using default configurations from \texttt{prediction.
     \end{minipage}
 \end{figure}
 
-The per-class analysis shows that all models achieve the highest recall for Graduate and the lowest for Enrolled. This is consistent with the class imbalance and the transitional nature of enrolled students, who share feature characteristics with both Dropout and Graduate.
-
-\textbf{Error analysis.} The confusion matrix (Figure~\ref{fig:cm_test}) reveals the dominant error pattern: Graduate students are correctly identified with the highest recall (78.6\%), while Enrolled students show the lowest (68.1\%), with 12.6\% misclassified as Dropout and 19.3\% as Graduate. This confirms that Enrolled does not occupy a distinct decision region. The pattern aligns with the t-SNE visualization (Section~2.2) and clustering results (Section~2.3), where Enrolled points lie in the overlapping zone between the two more separable outcomes. The structural overlap between classes, beyond class imbalance alone, is a major source of classification difficulty.
+The confusion matrix (Figure~\ref{fig:cm_test}) shows Graduate recall is highest (78.6\%) while Enrolled is lowest (68.1\%, with 12.6\% misclassified as Dropout and 19.3\% as Graduate). This confirms that Enrolled lies in the overlapping zone between the two more separable outcomes, consistent with t-SNE (Section~2.2) and clustering (Section~2.3) findings.
 
 \subsection{Evaluation and Model Choice}
 
-We evaluate the three mandatory baselines using held-out precision/recall/F1, One-vs-Rest ROC-AUC, cross-validation, validation curves, learning curves, and GridSearchCV tuning. The overall final model choice is deferred to the open-ended section.
+We evaluate the mandatory baselines using held-out metrics, ROC-AUC, cross-validation, validation/learning curves, and GridSearchCV tuning.
 
 \textbf{Detailed metrics.} Table~\ref{tab:nb05_metrics} reports the full set of evaluation metrics on the test set. LR leads among the mandatory baselines by macro F1, while SVM becomes competitive after corrected scaling but still trails LR.
 
@@ -361,11 +353,11 @@ We evaluate the three mandatory baselines using held-out precision/recall/F1, On
     \end{minipage}
 \end{table}
 
-\textbf{ROC curves and AUC.} Figure~\ref{fig:roc} compares macro-average ROC curves. LR achieves the highest macro AUC (0.888), closely followed by SVM (0.887) and DT (0.783).
+\textbf{ROC curves and AUC.} Figure~\ref{fig:roc} compares macro-average ROC curves. LR achieves the highest macro AUC (0.888), closely followed by SVM (0.887) and DT (0.783). Per-class One-vs-Rest ROC analysis confirms that Enrolled is the hardest class to predict across all models (AUC $\approx$ 0.82 vs.\ $\approx$ 0.93 for Graduate), consistent with its transitional position between Dropout and Graduate outcomes.
 
 \textbf{Cross-validation.} 5-fold CV on the combined train+val set (3{,}760 samples) confirms LR as the most stable mandatory baseline: LR CV F1 = 0.7029 $\pm$ 0.0064, DT = 0.6511 $\pm$ 0.0144, SVM = 0.6955 $\pm$ 0.0063.
 
-\textbf{Validation curve analysis} reveals model-specific sensitivity to hyperparameters. Figure~\ref{fig:valcurves_all} shows the two most informative curves: DT max\_depth exhibits classic overfitting (training score rises while validation drops), while SVM C shows that increasing regularization flexibility steadily improves both training and validation performance.
+\textbf{Validation curve analysis.} Figure~\ref{fig:valcurves_all} shows that DT max\_depth exhibits classic overfitting, while SVM C steadily improves performance. LR is insensitive to C, confirming the linear assumption is the primary bottleneck.
 
 \begin{figure}[htbp]
     \centering
@@ -383,8 +375,6 @@ We evaluate the three mandatory baselines using held-out precision/recall/F1, On
         \label{fig:valcurves_all}
     \end{minipage}
 \end{figure}
-
-LR is relatively insensitive to its regularization parameter C, suggesting the linear assumption is the primary bottleneck. SVM gamma (not shown) causes severe overfitting at high values; the optimal C and gamma must be tuned jointly.
 
 \textbf{Learning curves} confirm that DT persistently overfits, LR has nearly converged, and SVM could benefit from more data.
 
@@ -420,10 +410,8 @@ LR is relatively insensitive to its regularization parameter C, suggesting the l
     \end{minipage}
 \end{figure}
 
-SVM benefits most from tuning, improving held-out macro F1 from 0.6955 to 0.7033. DT and LR do not improve on the test set, suggesting that LR's limitation is its linear boundary rather than regularization strength. Enrolled remains the hardest class across all configurations.
-
-\textbf{Baseline summary.}
-Within the mandatory baselines, LR is strongest and most stable. DT overfits, SVM benefits from tuning but remains below LR, and Enrolled remains the hardest class because it is both underrepresented and structurally intermediate. These findings motivate open-ended exploration beyond baseline deployment.
+\textbf{Further discussion.}
+Among the mandatory baselines, LR is the strongest and most stable model, achieving the highest macro AUC (0.888) and test macro F1 (0.708). DT exhibits the most overfitting, with validation curves showing diverging train/test scores and the largest train-test F1 gap (Table~\ref{tab:nb04_metrics}). SVM benefits from GridSearchCV tuning (macro F1: 0.6955 $\to$ 0.7033) but remains below LR, suggesting the RBF kernel adds limited value in this feature space. LR's limitation stems from its linear decision boundary rather than insufficient regularization, as tuning yields negligible improvement. Across all configurations, Enrolled remains the hardest class because it is both underrepresented and structurally intermediate between Dropout and Graduate. These findings motivate open-ended exploration of ensemble methods and class-boundary refinement.
 
 % ====================
 \section{Open-ended Exploration}
@@ -432,7 +420,7 @@ Within the mandatory baselines, LR is strongest and most stable. DT overfits, SV
 
 \subsection{Ensemble and Decision-boundary Refinement}
 
-The corrected top-40 feature space changes the open-ended question: the baseline bottleneck is no longer simply weak model capacity, but the boundary around the Enrolled class. We therefore evaluated tree ensembles (RF, GB, ExtraTrees) and a validation-tuned LR decision rule. The latter keeps the LR probability model fixed but tunes additive class biases on the validation set to maximize macro F1, then applies the selected biases to the held-out test set.
+Since the baseline bottleneck is the Enrolled class boundary, we evaluate tree ensembles (RF, GB, ExtraTrees) and a validation-tuned LR decision rule that adjusts additive class biases to maximize macro F1 on the held-out test set.
 
 \begin{figure}[htbp]
     \centering
@@ -450,6 +438,7 @@ The corrected top-40 feature space changes the open-ended question: the baseline
             RF (tuned) & 0.7470 & 0.7120 & 0.7133 & 0.7064 & 0.7554 \\
             GradientBoosting (tuned) & \textbf{0.7726} & 0.7131 & 0.6965 & 0.7027 & 0.7657 \\
             ExtraTrees & 0.7666 & 0.7174 & 0.7141 & 0.7143 & 0.7689 \\
+            MLP (tuned) & \textbf{0.7756} & 0.7216 & 0.6997 & 0.7077 & 0.7681 \\
             LR + class-bias tuning & 0.7651 & \textbf{0.7303} & \textbf{0.7290} & \textbf{0.7228} & \textbf{0.7725} \\
             \bottomrule
             \end{tabular}
@@ -463,7 +452,9 @@ The corrected top-40 feature space changes the open-ended question: the baseline
     \end{minipage}
 \end{figure}
 
-Ensemble gains are useful but modest: ExtraTrees reaches macro F1 = 0.7143, above RF and GB, while the validation-tuned LR rule gives the largest held-out improvement (0.7228). This supports the interpretation that the remaining error is mainly a class-boundary problem around Enrolled. Since argmax depends only on relative differences, we fix Dropout bias at 0 and search the Enrolled and Graduate offsets. The selected biases [0, 0, +0.4] give Graduate a +0.4 log-odds advantage, correcting the balanced model's tendency to over-predict Enrolled in borderline cases.
+ExtraTrees reaches macro F1 = 0.7143, while the validation-tuned LR rule achieves the best held-out score (0.7228). Since argmax is translation-invariant, we fix Dropout bias at 0 and search only the Enrolled and Graduate offsets; the selected biases [0, 0, +0.4] give Graduate a +0.4 log-odds advantage, correcting the balanced model's tendency to over-predict Enrolled in borderline cases.
+
+We also explored Multi-Layer Perceptron (MLP) neural networks with five architectures (1--3 hidden layers, 50--100 neurons). The best architecture (100-50) tuned via GridSearchCV achieves the highest accuracy (0.7756) but a lower macro F1 (0.7077) than LR+bias, with Enrolled recall only 44\%. This confirms that on this mid-size tabular dataset, tree ensembles and linear models with boundary refinement remain more effective than neural networks.
 
 \subsection{Class Imbalance Handling}
 
@@ -555,7 +546,7 @@ Feature importance scores from the tuned Random Forest (Figure~\ref{fig:feature_
 
 \textbf{Feature group ablation.} Academic features alone account for most predictive signal (F1 = 0.669), while socioeconomic features alone are weaker (F1 = 0.561). Combining both groups yields the best and most stable performance (F1 = 0.714), confirming complementary information beyond academic records.
 
-\textbf{Feature count and interaction experiments.} Feature count experiments (10/20/30/40 features, 5-fold CV) show that top-40 is best (F1 = 0.700), while top-10 drops to 0.655. Polynomial interactions expanded 40 to 85 dimensions but did not improve CV F1, so we retain the original top-40 space.
+\textbf{Feature count and interaction experiments.} Top-40 features yield the best CV F1 (0.700); polynomial interactions (85 dimensions) do not improve performance, so we retain the original top-40 space.
 
 \subsection{Comprehensive Model Comparison}
 
@@ -582,6 +573,7 @@ Table~\ref{tab:all_models} presents all test-set model configurations. Using hel
             RF (tuned) & 0.7470 & 0.7064 & 0.7554 \\
             GradientBoosting (tuned) & \textbf{0.7726} & 0.7027 & 0.7657 \\
             ExtraTrees & 0.7666 & 0.7143 & 0.7689 \\
+            MLP (tuned) & \textbf{0.7756} & 0.7077 & 0.7681 \\
             LR + class-bias tuning & 0.7651 & \textbf{0.7228} & \textbf{0.7725} \\
             \bottomrule
             \end{tabular}

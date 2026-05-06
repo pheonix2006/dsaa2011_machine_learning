@@ -1,0 +1,6 @@
+architecture,description,cv_f1_macro_mean,cv_f1_macro_std,test_accuracy,test_f1_macro
+"MLP (50,)","Single hidden layer, 50 neurons",0.6883,0.0185,0.7786,0.7157
+"MLP (100,)","Single hidden layer, 100 neurons",0.6763,0.0283,0.7696,0.7039
+"MLP (50,50)","Two hidden layers, 50 neurons each",0.6737,0.0227,0.7771,0.7165
+"MLP (100,50)","Two hidden layers, decreasing",0.6906,0.02,0.7756,0.7075
+"MLP (100,50,25)","Three hidden layers, decreasing",0.6809,0.0206,0.7605,0.6941
