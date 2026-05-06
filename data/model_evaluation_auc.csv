@@ -1,4 +1,4 @@
 model,class,auc
-Decision Tree,Macro,0.495429051236163
-Logistic Regression,Macro,0.48557923570636735
-SVM (RBF),Macro,0.4930807161546972
+Decision Tree,Macro,0.7825514309834328
+Logistic Regression,Macro,0.8879805826758663
+SVM (RBF),Macro,0.8875369000192129

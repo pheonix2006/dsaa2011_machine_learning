@@ -1,2 +1,2 @@
 model,val_f1_macro,test_accuracy,test_f1_macro,bias_dropout,bias_enrolled,bias_graduate
-LR + class-bias tuning,0.722504502839126,0.3569277108433735,0.31116446809346626,-0.8,-0.8,-0.4
+LR + class-bias tuning,0.722504502839126,0.7650602409638554,0.7228439351415235,-0.8,-0.8,-0.4
