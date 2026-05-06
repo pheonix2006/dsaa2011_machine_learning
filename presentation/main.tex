@@ -48,7 +48,7 @@ This study is based on the ``Student Dropout and Academic Success'' dataset from
 \section{Clustering Analysis}
 
 \begin{frame}
-\frametitle{Clustering (1/2): Algorithm Selection \& Tuning}
+\frametitle{Clustering (1/3): Algorithm Selection \& Tuning}
 
 \begin{columns}[T]
 
@@ -102,7 +102,7 @@ This study is based on the ``Student Dropout and Academic Success'' dataset from
 \end{frame}
 
 \begin{frame}
-\frametitle{Clustering (2/2): Core Insight \& Visualizations}
+\frametitle{Clustering (2/3): Core Insight \& Visualizations}
 
 \vspace{-0.1cm}
 {\large \textbf{\textcolor{mainblue}{Insight: Natural Label Consistency}}}
@@ -123,7 +123,7 @@ This study is based on the ``Student Dropout and Academic Success'' dataset from
         \centering
         \scriptsize \textbf{Original Labels} \\
         \vspace{0.1cm}
-        \includegraphics[width=\textwidth, height=0.45\textheight, keepaspectratio]{../data/plots/02_tsne_2d_perplexity_best.png}
+        \includegraphics[width=\textwidth, height=0.45\textheight, keepaspectratio]{../data/plots/03_tsne_perp_30.png}
     \end{column}
     
     % 图2：层次聚类
@@ -154,7 +154,59 @@ This study is based on the ``Student Dropout and Academic Success'' dataset from
 
 \end{frame}
 
-\section{Part C}
+\begin{frame}
+\frametitle{Clustering (3/3): Core Insight \& Visualizations}
+
+\vspace{-0.1cm}
+{\large \textbf{\textcolor{mainblue}{Insight: Natural Label Consistency}}}
+\begin{itemize}
+    \footnotesize
+    \setlength{\itemsep}{2pt}
+    \item \textbf{Consistency:} Clustering results seem to be basically consistent with true labels. 
+    \item \textbf{Ablation Check:} Removing target-encoded features yielded identical structures. 
+\end{itemize}
+
+\vspace{0.2cm}
+\rule{\textwidth}{0.4pt}
+
+
+\begin{columns}[T]
+
+    \begin{column}{0.25\textwidth}
+        \centering
+        \scriptsize \textbf{Original Labels} \\
+        \vspace{0.1cm}
+        \includegraphics[width=\textwidth, height=0.45\textheight, keepaspectratio]{../data/plots/03a_tsne_perp_30.png}
+    \end{column}
+    
+    % 图2：层次聚类
+    \begin{column}{0.25\textwidth}
+        \centering
+        \scriptsize \textbf{Hierarchical (Ward)} \\
+        \vspace{0.1cm}
+        \includegraphics[width=\textwidth, height=0.45\textheight, keepaspectratio]{../data/plots/03a_hierarchical_clusters_tsne.png} 
+    \end{column}
+    
+    % 图3：K-Means
+    \begin{column}{0.25\textwidth}
+        \centering
+        \scriptsize \textbf{K-Means ($K=4$)} \\
+        \vspace{0.1cm}
+        \includegraphics[width=\textwidth, height=0.45\textheight, keepaspectratio]{../data/plots/03a_kmeans_clusters_tsne.png} 
+    \end{column}
+
+    % 图4：GMM
+    \begin{column}{0.25\textwidth}
+        \centering
+        \scriptsize \textbf{GMM (Tied)} \\
+        \vspace{0.1cm}
+        \includegraphics[width=\textwidth, height=0.45\textheight, keepaspectratio]{../data/plots/03a_gmm_clusters_tsne.png} 
+    \end{column}
+\end{columns}
+
+\end{frame}
+
+\section{Open-ended Exploration}
 \begin{frame}
 \frametitle{Open-ended Exploration: LR Class-Bias Tuning}
 
