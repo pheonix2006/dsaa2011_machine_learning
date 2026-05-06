@@ -70,13 +70,15 @@ def plot_roc_curves(
         macro_auc = auc(mean_fpr, mean_tpr)
         class_aucs["macro"] = float(macro_auc)
         auc_dict[name] = class_aucs
-        ax.plot(mean_fpr, mean_tpr, linewidth=2, label=f"{name} (macro AUC={macro_auc:.3f})")
+        ax.plot(mean_fpr, mean_tpr, linewidth=4, label=f"{name} (macro AUC={macro_auc:.3f})")
 
     ax.plot([0, 1], [0, 1], "k--", linewidth=1, alpha=0.6)
-    ax.set_xlabel("False Positive Rate")
-    ax.set_ylabel("True Positive Rate")
-    ax.set_title("Macro-average ROC Curves", fontweight="bold")
-    ax.legend(loc="lower right")
+    ax.set_xlabel("False Positive Rate", fontsize=20)
+    ax.set_ylabel("True Positive Rate", fontsize=20)
+    ax.set_title("Macro-average ROC Curves", fontweight="bold", fontsize=24, pad=10)
+    ax.set_xlim([-0.02, 1.0])
+    ax.set_ylim([0.0, 1.02])
+    ax.legend(loc="lower right", fontsize=15)
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
 

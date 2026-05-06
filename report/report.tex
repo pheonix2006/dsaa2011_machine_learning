@@ -234,7 +234,7 @@ GMM & 4 & \textbf{0.3336} & \textbf{0.2734} & 0.1423 & 559.91 & 2.2580 \\ \botto
 
 \subsubsection{Clustering Ablation: Impact of Target Encoding}
 
-To test the impact of OOF target encoding on clustering performance, we conducted an ablation experiment where we removed all target-encoded features and re-ran the clustering algorithms on the remaining 23 features (standardized numerical features and binary features). 
+To test the impact of OOF target encoding on clustering performance, we conducted an ablation experiment where we removed all target-encoded features and re-ran the clustering algorithms on the remaining 23 features (standardized numerical features and binary features). The visualization of the clustering results without target-encoded features is shown in Figure~\ref{fig:cluster_visualization_no_target}.
 
 The clustering performance significantly decreased across all algorithms, comfirming that target encoding contributed to the clustering structure. However, the overall patterns remained consistent: all three algorithms still produced similar global structures with one cluster dominated by Graduate students and one cluster dominated by Dropout students, while Enrolled students does not form a distinct cluster among the remaining features but instead overlap with the other two classes. This suggests that while target encoding enhances the clustering signal especially for Enrolled students, the underlying structure of the data still reflects the same class relationships.
 
@@ -270,13 +270,12 @@ The clustering performance significantly decreased across all algorithms, comfir
     \label{fig:gmm_cluster_viz}
 \end{minipage}
 \caption{Cluster visualization on 2D t-SNE projections without target-encoded features.}
-\label{fig:cluster_visualization}
+\label{fig:cluster_visualization_no_target}
 \end{figure}
-
 
 \subsubsection{Density-Based Clustering Exploration}
 
-DBSCAN and OPTICS were explored but failed: DBSCAN classified 100\% of points as noise across all \texttt{eps} values (0.3-1.5), and OPTICS with xi-based extraction consistently returned only one cluster. Both failures stem from the curse of dimensionality --- in 40 dimensions all pairwise distances become similar (coefficient of variation = 0.32), making density-based methods unable to identify dense regions.
+DBSCAN and OPTICS were explored but failed: DBSCAN classified 100\% of points as noise across all \texttt{eps} values (0.3-1.5), and OPTICS with $\xi$-based extraction consistently returned only one cluster. We suspect that the high dimensionality and the resulting distance concentration phenomenon in the engineered feature space make it difficult for density-based methods to identify meaningful clusters, especially for the Enrolled class which is structurally intermediate and does not form a distinct dense region.
 
 \subsection{Prediction: Training and Testing}
 
@@ -292,7 +291,7 @@ We trained each classifier using default configurations from \texttt{prediction.
 
 \begin{figure}[htbp]
     \centering
-    \begin{minipage}[c]{0.52\textwidth}
+    \begin{minipage}[c]{0.55\textwidth}
         \centering
         \captionof{table}{Baseline model performance (macro F1 across splits and test accuracy).}
         \label{tab:nb04_metrics}
@@ -308,7 +307,7 @@ We trained each classifier using default configurations from \texttt{prediction.
             \end{tabular}
         }
     \end{minipage}\hfill
-    \begin{minipage}[c]{0.44\textwidth}
+    \begin{minipage}[c]{0.4\textwidth}
         \centering
         \includegraphics[width=\linewidth]{../data/plots/04_confusion_matrix_lr_only.png}
         \caption{Logistic Regression confusion matrix on the test set.}
@@ -329,7 +328,7 @@ We evaluate the three mandatory baselines using held-out precision/recall/F1, On
 \begin{table}[htbp]
     \centering
     \small
-    \begin{minipage}[t]{0.6\textwidth}
+    \begin{minipage}[t]{0.56\textwidth}
         \centering
         \caption{Detailed per-model metrics on the test set.}
         \label{tab:nb05_metrics}
@@ -345,7 +344,7 @@ We evaluate the three mandatory baselines using held-out precision/recall/F1, On
             \end{tabular}
         }
     \end{minipage}\hfill
-    \begin{minipage}[t]{0.36\textwidth}
+    \begin{minipage}[t]{0.4\textwidth}
         \centering
         \caption{Per-class and Macro AUC.}
         \label{tab:auc_comparison}
@@ -392,7 +391,7 @@ LR is relatively insensitive to its regularization parameter C, suggesting the l
 
 \begin{figure}[htbp]
     \centering
-    \begin{minipage}[c]{0.6\textwidth}
+    \begin{minipage}[c]{0.65\textwidth}
         \textbf{Hyperparameter tuning via GridSearchCV} produced the best configurations:
         \vspace{0.5em} 
         
@@ -404,7 +403,7 @@ LR is relatively insensitive to its regularization parameter C, suggesting the l
             \end{tabular}
         }
     \end{minipage}\hfill
-    \begin{minipage}[c]{0.38\textwidth}
+    \begin{minipage}[c]{0.3\textwidth}
         \centering
         \captionof{table}{Baseline vs.\ tuned (F1 macro).}
         \label{tab:tuning}
@@ -475,6 +474,8 @@ Table~\ref{tab:class_weight} compares per-class Enrolled F1 with and without bal
 \centering
 \caption{Effect of class weighting on Enrolled F1 score.}
 \label{tab:class_weight}
+\begin{minipage}{0.80\textwidth}
+\centering
 \begin{tabular}{@{}lccc@{}}
 \toprule
 Model & Enrolled F1 (default) & Enrolled F1 (balanced) & $\Delta$ \\
@@ -484,6 +485,7 @@ Logistic Reg.\ & 0.4476 & 0.5277 & $+$0.0801 \\
 SVM (RBF) & 0.4887 & 0.5180 & $+$0.0293 \\
 \bottomrule
 \end{tabular}
+\end{minipage}
 \end{table}
 
 Balanced weighting still improves Enrolled recognition, especially for DT and LR. SVM no longer collapses after scaling correction, so the previous SVM failure was partly preprocessing-related. Remaining Enrolled errors reflect both minority-class pressure and structural overlap.
