@@ -45,7 +45,9 @@ We analyze the UCI Student Dropout and Academic Success dataset through preproce
 
 The Student Dropout and Academic Success dataset from the UCI Machine Learning Repository \cite{predict_students'_dropout_and_academic_success_697} contains 4,424 instances of students enrolled in various undergraduate programs at a Portuguese higher education institution. Each instance is described by 36 features covering demographics, socioeconomic background, and academic performance across the first and second semesters.
 
-The report follows an evidence-first structure: construct an engineered top-40 feature space, use t-SNE and clustering to test whether outcomes form natural groups, then evaluate supervised decision boundaries. Because Enrolled students remain structurally intermediate between Dropout and Graduate, the open-ended section focuses on class-boundary refinement rather than only adding model complexity.
+The report follows an evidence-first structure: construct an engineered top-40 feature space, use t-SNE and clustering to test whether outcomes form natural groups, then evaluate supervised decision boundaries. Exploratory t-SNE visualization and clustering reveal that Enrolled students occupy an intermediate position between Dropout and Graduate, rather than forming a distinct group, making them the most challenging to classify. Clustering results suggest that the dataset may present strong and stable underlying pattern that matches the true labels, which is justified by our appended ablation experiments.
+
+Among the evaluated models, Logistic Regression (LR) emerges as the strongest baseline, and further validation-tuned class-bias adjustment for LR achieves the highest held-out test macro F1 score of 0.723. These findings highlight the importance of feature engineering and targeted decision-boundary refinement for improving student outcome prediction.
 
 % ====================
 \section{Mandatory Tasks}
@@ -112,7 +114,7 @@ Furthermore, extending the projection from 2D to 3D (Figure~\ref{fig:tsne_3d}) p
 
 \subsection{Clustering Analysis}
 
-\subsubsection{Algorithm Exploration and Comparison}
+\subsubsection{Clustering Algorithm Exploration}
 
 We applied three clustering algorithms to the engineered feature dataset: K-Means \cite{ahmed2020k}, Agglomerative Hierarchical Clustering \cite{murtagh2012algorithms}, and Gaussian Mixture Models (GMM). 2D t-SNE projections with perplexity 30 were used for visualization, which can be compared with the original t-SNE visualization (Figure~\ref{fig:tsne_perplexity}) to assess how well the clusters align with the underlying structure (true label) of the data.
 
@@ -158,7 +160,11 @@ K & ARI & NMI & Silhouette & CH Index & DB Index \\ \midrule
 
 \paragraph{GMM K-Value and Covariance Exploration.} We tested $K=3,4,5,6$ combined with four covariance types (full, tied, diag, spherical). $K=4$ with tied covariance achieved the highest ARI of 0.3336 and NMI of 0.2734.
 
-\textbf{Overall Algorithm Comparison:} Table~\ref{tab:clustering_comparison} summarizes all three algorithms with their optimal configurations. GMM (K=4, tied) leads in ARI (0.3336) and NMI (0.2734). However, the gap of the metrics among the three algorithms is minor, and overall performance is modest across all algorithms. This may suggest that the global clustering structure of the dataset is relatively strong and stable, leading to similar partitions across different algorithms, but the structural overlap between classes (especially Enrolled) limits the maximum achievable ARI and NMI.
+\subsubsection{Overall Algorithm Comparison}
+
+Table~\ref{tab:clustering_comparison} summarizes all three algorithms with their optimal configurations. \textbf{Best clustering: GMM (K=4, tied covariance)} achieves the best ARI of 0.334 and NMI of 0.273, confirming that the shared covariance structure reduces overfitting in the high-dimensional target-encoded space. The modest ARI still reflects structural class overlap (Enrolled students lie between Dropout and Graduate), but GMM's soft assignments capture more label-aligned structure than centroid-based methods.
+
+However, the gap of the metrics among the three algorithms is minor, and overall performance is modest across all algorithms. This may suggest that the global clustering structure of the dataset is relatively strong and stable, leading to similar partitions across different algorithms, but the structural overlap between classes (especially Enrolled) limits the maximum achievable ARI and NMI.
 
 Figure~\ref{fig:cluster_visualization} shows the cluster assignments of the three algorithms and true labels on the 2D t-SNE projection. K-Means produces compact clusters but with significant label mixing, while the results of Hierarchical clustering and GMM show more mixing and overlap patterns between the clusters. Nevertheless, all three algorithms capture similar global structures that is highly consistent with the true labels, with one cluster dominated by Graduate students, one cluster dominated by Dropout students, and one cluster that is a mixture of Enrolled and other classes. 
 
@@ -228,8 +234,6 @@ GMM & 4 & \textbf{0.3336} & \textbf{0.2734} & 0.1423 & 559.91 & 2.2580 \\ \botto
 \caption{Cluster visualization on 2D t-SNE projections.}
 \label{fig:cluster_visualization}
 \end{figure}
-
-% \textbf{Best clustering: GMM (K=4, tied covariance)} achieves the best ARI of 0.334 and NMI of 0.273, confirming that the shared covariance structure reduces overfitting in the high-dimensional target-encoded space. The modest ARI still reflects structural class overlap (Enrolled students lie between Dropout and Graduate), but GMM's soft assignments capture more label-aligned structure than centroid-based methods.
 
 \subsubsection{Clustering Ablation: Impact of Target Encoding}
 
@@ -416,8 +420,6 @@ Among the mandatory baselines, LR is the strongest and most stable model, achiev
 % ====================
 \section{Open-ended Exploration}
 
-
-
 \subsection{Ensemble and Decision-boundary Refinement}
 
 Since the baseline bottleneck is the Enrolled class boundary, we evaluate tree ensembles (RF, GB, ExtraTrees) and a validation-tuned LR decision rule that adjusts additive class biases to maximize macro F1 on the held-out test set.
@@ -602,7 +604,9 @@ Table~\ref{tab:all_models} presents all test-set model configurations. Using hel
 % ====================
 \section{Conclusion}
 
-\textbf{Key findings:} The engineered top-40 feature space contains strong predictive signal, with academic metrics providing the primary contribution (academic-only F1 = 0.669; all top-40 F1 = 0.714). t-SNE and clustering show that the outcomes are not naturally separated because Enrolled students lie between Dropout and Graduate. Among mandatory baselines, LR is strongest and most stable; DT overfits and SVM improves once the final top-40 space is correctly standardized. In open-ended exploration, LR with validation-tuned class biases achieves the best held-out test macro F1 of 0.7228 versus 0.7102 for plain LR, though the bootstrap result is borderline ($p = 0.051$). Enrolled remains the primary challenge because it is both a minority class and a structurally transitional outcome.
+\textbf{Key findings:} The engineered top-40 feature space contains strong predictive signal, with academic metrics providing the primary contribution (academic-only F1 = 0.669; all top-40 F1 = 0.714). t-SNE and clustering show that the outcomes are not naturally separated because Enrolled students lie between Dropout and Graduate. Clustering results suggest an underlying pattern that matches the true labels, which is justified by an appended ablation experiments.
+
+Among mandatory baselines, LR is strongest and most stable; DT overfits and SVM improves once the final top-40 space is correctly standardized. In open-ended exploration, LR with validation-tuned class biases achieves the best held-out test macro F1 of 0.7228 versus 0.7102 for plain LR, though the bootstrap result is borderline ($p = 0.051$). Enrolled remains the primary challenge because it is both a minority class and a structurally transitional outcome.
 
 \textbf{Limitations:} The borderline gap between LR+bias and plain LR means the final result should not be treated as a definitive deployment advantage without external validation. The t-SNE decision-boundary plots are 2D approximations, and clustering struggled because discriminative features do not correspond to natural density-based clusters.
 
